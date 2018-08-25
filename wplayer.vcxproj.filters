@@ -16,10 +16,60 @@
     <Filter Include="src">
       <UniqueIdentifier>{a73f58dc-f1c6-437c-a87c-a0f3d7ba5403}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\base">
+      <UniqueIdentifier>{4804a8b0-4a2f-490f-8b9d-d7089dc63537}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\MainWindow">
+      <UniqueIdentifier>{8e3d9408-5d45-467a-9ace-d19f637704d0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\PlayerControls">
+      <UniqueIdentifier>{9a134cd5-8323-4f33-99e2-5ce887aa507d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\DesktopWindow">
+      <UniqueIdentifier>{b30fc059-6e00-4b52-888b-f89aa6196f7d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\base\Common.cpp">
+      <Filter>src\base</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\TrackBar.cpp">
+      <Filter>src\base</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\Window.cpp">
+      <Filter>src\base</Filter>
+    </ClCompile>
+    <ClCompile Include="src\DesktopWindow\DesktopWindow.cpp">
+      <Filter>src\DesktopWindow</Filter>
+    </ClCompile>
     <ClCompile Include="src\main.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\MainWindow\MainWindow.cpp">
+      <Filter>src\MainWindow</Filter>
+    </ClCompile>
+    <ClCompile Include="src\PlayerControls\PlayListView.cpp">
+      <Filter>src\PlayerControls</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\base\Common.h">
+      <Filter>src\base</Filter>
+    </ClInclude>
+    <ClInclude Include="src\base\TrackBar.h">
+      <Filter>src\base</Filter>
+    </ClInclude>
+    <ClInclude Include="src\base\Window.h">
+      <Filter>src\base</Filter>
+    </ClInclude>
+    <ClInclude Include="src\DesktopWindow\DesktopWindow.h">
+      <Filter>src\DesktopWindow</Filter>
+    </ClInclude>
+    <ClInclude Include="src\MainWindow\MainWindow.h">
+      <Filter>src\MainWindow</Filter>
+    </ClInclude>
+    <ClInclude Include="src\PlayerControls\PlayListView.h">
+      <Filter>src\PlayerControls</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
