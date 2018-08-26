@@ -7,6 +7,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "wplayer", "wplayer\wplayer.
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "lyrics", "lyrics\lyrics.vcxproj", "{D448A10D-DE8A-41FF-99DD-8D584131C5B5}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LyricsTest", "LyricsTest\LyricsTest.vcxproj", "{CDE651EE-25D6-43A2-B05E-992F8A610991}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -29,6 +31,12 @@ Global
 		{D448A10D-DE8A-41FF-99DD-8D584131C5B5}.Release|x64.ActiveCfg = Release|Win32
 		{D448A10D-DE8A-41FF-99DD-8D584131C5B5}.Release|x86.ActiveCfg = Release|Win32
 		{D448A10D-DE8A-41FF-99DD-8D584131C5B5}.Release|x86.Build.0 = Release|Win32
+		{CDE651EE-25D6-43A2-B05E-992F8A610991}.Debug|x64.ActiveCfg = Debug|Win32
+		{CDE651EE-25D6-43A2-B05E-992F8A610991}.Debug|x86.ActiveCfg = Debug|Win32
+		{CDE651EE-25D6-43A2-B05E-992F8A610991}.Debug|x86.Build.0 = Debug|Win32
+		{CDE651EE-25D6-43A2-B05E-992F8A610991}.Release|x64.ActiveCfg = Release|Win32
+		{CDE651EE-25D6-43A2-B05E-992F8A610991}.Release|x86.ActiveCfg = Release|Win32
+		{CDE651EE-25D6-43A2-B05E-992F8A610991}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
