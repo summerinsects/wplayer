@@ -21,14 +21,14 @@ struct lyrics_sentence_t {
     std::string translation;  // 翻译
 };
 
-struct lyrics_info_t {
-    std::unordered_map<std::string, std::string> metadata;
+struct lyrics_detail_t {
+    std::unordered_map<std::string, std::string> tags;
     unsigned total_time = 0;
     int offset = 0;
     std::vector<lyrics_sentence_t> sentences;
 };
 
-bool lyrics_decode(const std::vector<uint8_t> &data, lyrics_info_t *info);
-bool lyrics_encode(const lyrics_info_t *info, std::vector<uint8_t> &data);
+bool lyrics_decode(const std::vector<uint8_t> &data, lyrics_detail_t *lyrics);
+bool lyrics_encode(const lyrics_detail_t *lyrics, std::vector<uint8_t> &data);
 
 #endif

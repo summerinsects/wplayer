@@ -73,7 +73,7 @@ static bool encode_buffer(const std::string &str, std::vector<uint8_t> &output) 
     return true;
 }
 
-static bool parse_metadata(const std::string &line,  std::unordered_map<std::string, std::string> *metadata) {
+static bool parse_tags(const std::string &line,  std::unordered_map<std::string, std::string> *tags) {
     if (line.empty() || line.length() < 3 || line.front() != L'[' || line.back() != L']') {
         return false;
     }
@@ -83,12 +83,12 @@ static bool parse_metadata(const std::string &line,  std::unordered_map<std::str
     }
 
     if (pos > 1 && pos + 2 < line.length()) {
-        metadata->insert(std::make_pair(line.substr(1, pos - 1), line.substr(pos + 1, line.length() - pos - 2)));
+        tags->insert(std::make_pair(line.substr(1, pos - 1), line.substr(pos + 1, line.length() - pos - 2)));
     }
     return true;
 }
 
-static std::string stringify_metadata(std::unordered_map<std::string, std::string> metadata, unsigned total, int offset, const std::string &language) {
+static std::string stringify_tags(std::unordered_map<std::string, std::string> tags, unsigned total, int offset, const std::string &language) {
     std::stringstream ss;
 
     static const struct {
@@ -103,10 +103,10 @@ static std::string stringify_metadata(std::unordered_map<std::string, std::strin
     };
 
     for (size_t i = 0, cnt = sizeof(metaOrder) / sizeof(*metaOrder); i < cnt; ++i) {
-        auto it = metadata.find(metaOrder[i].key);
-        if (it != metadata.end()) {
+        auto it = tags.find(metaOrder[i].key);
+        if (it != tags.end()) {
             ss << '[' << it->first << ':' << it->second << ']' << std::endl;
-            metadata.erase(it);
+            tags.erase(it);
         } else {
             ss << '[' << metaOrder[i].key << ':' << metaOrder[i].value << ']' << std::endl;
         }
@@ -121,7 +121,7 @@ static std::string stringify_metadata(std::unordered_map<std::string, std::strin
     }
 
     // TODO: 其他数据
-    //for (auto it = metadata.begin(); it != metadata.end() ++it) {
+    //for (auto it = tags.begin(); it != tags.end() ++it) {
     //
     //}
 
@@ -416,7 +416,7 @@ static std::string stringify_language(const std::vector<lyrics_sentence_t> &sent
     return base64_encode((const uint8_t *)buf.GetString(), buf.GetSize());
 }
 
-bool lyrics_decode(const std::vector<uint8_t> &data, lyrics_info_t *info) {
+bool lyrics_decode(const std::vector<uint8_t> &data, lyrics_detail_t *lyrics) {
     std::string str;
     if (!decode_buffer(data, str)) {
         return false;
@@ -430,43 +430,43 @@ bool lyrics_decode(const std::vector<uint8_t> &data, lyrics_info_t *info) {
             line.pop_back();
         }
 
-        if (parse_metadata(line, &info->metadata)) {
+        if (parse_tags(line, &lyrics->tags)) {
             continue;
         }
 
         lyrics_sentence_t sentence;
         if (parse_sentence(line.c_str(), &sentence)) {
-            info->sentences.push_back(std::move(sentence));
+            lyrics->sentences.push_back(std::move(sentence));
         }
     }
 
-    auto it = info->metadata.find("offset");
-    if (it != info->metadata.end()) {
-        info->offset = atoi(it->second.c_str());
-        info->metadata.erase(it);
+    auto it = lyrics->tags.find("offset");
+    if (it != lyrics->tags.end()) {
+        lyrics->offset = atoi(it->second.c_str());
+        lyrics->tags.erase(it);
     }
 
-    it = info->metadata.find("total");
-    if (it != info->metadata.end()) {
-        info->total_time = atoi(it->second.c_str());
-        info->metadata.erase(it);
+    it = lyrics->tags.find("total");
+    if (it != lyrics->tags.end()) {
+        lyrics->total_time = atoi(it->second.c_str());
+        lyrics->tags.erase(it);
     }
 
-    it = info->metadata.find("language");
-    if (it != info->metadata.end()) {
-        parse_language(it->second, info->sentences);
-        info->metadata.erase(it);
+    it = lyrics->tags.find("language");
+    if (it != lyrics->tags.end()) {
+        parse_language(it->second, lyrics->sentences);
+        lyrics->tags.erase(it);
     }
 
     return true;
 }
 
-bool lyrics_encode(const lyrics_info_t *info, std::vector<uint8_t> &data) {
+bool lyrics_encode(const lyrics_detail_t *lyrics, std::vector<uint8_t> &data) {
     std::string str;
 
-    std::string language = stringify_language(info->sentences);
-    str.append(stringify_metadata(info->metadata, info->total_time, info->offset, language));
-    stringify_sentences(str, info->sentences);
+    std::string language = stringify_language(lyrics->sentences);
+    str.append(stringify_tags(lyrics->tags, lyrics->total_time, lyrics->offset, language));
+    stringify_sentences(str, lyrics->sentences);
 
     return encode_buffer(str, data);
 }
