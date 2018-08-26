@@ -120,7 +120,6 @@
     <ClCompile Include="src\base\TrackBar.cpp" />
     <ClCompile Include="src\base\Window.cpp" />
     <ClCompile Include="src\DesktopWindow\DesktopWindow.cpp" />
-    <ClCompile Include="src\LyricsSupport\lyrics.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\MainWindow\MainWindow.cpp" />
     <ClCompile Include="src\PlayerControls\PlayListView.cpp" />
@@ -131,7 +130,6 @@
     <ClInclude Include="src\base\TrackBar.h" />
     <ClInclude Include="src\base\Window.h" />
     <ClInclude Include="src\DesktopWindow\DesktopWindow.h" />
-    <ClInclude Include="src\LyricsSupport\lyrics.h" />
     <ClInclude Include="src\MainWindow\MainWindow.h" />
     <ClInclude Include="src\PlayerControls\PlayListView.h" />
   </ItemGroup>

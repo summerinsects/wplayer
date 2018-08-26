@@ -25,9 +25,6 @@
     <Filter Include="src\DesktopWindow">
       <UniqueIdentifier>{b30fc059-6e00-4b52-888b-f89aa6196f7d}</UniqueIdentifier>
     </Filter>
-    <Filter Include="src\LyricsSupport">
-      <UniqueIdentifier>{5a51fd4c-ec24-442c-875a-362f23740348}</UniqueIdentifier>
-    </Filter>
     <Filter Include="src\MainWindow">
       <UniqueIdentifier>{8e3d9408-5d45-467a-9ace-d19f637704d0}</UniqueIdentifier>
     </Filter>
@@ -50,9 +47,6 @@
     </ClCompile>
     <ClCompile Include="src\DesktopWindow\DesktopWindow.cpp">
       <Filter>src\DesktopWindow</Filter>
-    </ClCompile>
-    <ClCompile Include="src\LyricsSupport\lyrics.cpp">
-      <Filter>src\LyricsSupport</Filter>
     </ClCompile>
     <ClCompile Include="src\main.cpp">
       <Filter>src</Filter>
@@ -79,9 +73,6 @@
     </ClInclude>
     <ClInclude Include="src\DesktopWindow\DesktopWindow.h">
       <Filter>src\DesktopWindow</Filter>
-    </ClInclude>
-    <ClInclude Include="src\LyricsSupport\lyrics.h">
-      <Filter>src\LyricsSupport</Filter>
     </ClInclude>
     <ClInclude Include="src\MainWindow\MainWindow.h">
       <Filter>src\MainWindow</Filter>
