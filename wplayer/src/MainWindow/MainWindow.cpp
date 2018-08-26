@@ -188,6 +188,7 @@ void MainWindow::initWidgets() {
     });
     _progressTrack.setPosChangedListener([this](TrackBar *, LONG_PTR pos) {
         _player.seekTo(_hSelf, static_cast<DWORD>(pos * PROGRESS_SCALE), _playing);
+        _desktopWindow.forceRefresh();
     });
     _volumeTrack.setPosChangedListener([this](TrackBar *, LONG_PTR pos) {
         _volume = static_cast<int>(pos) * 10;
@@ -534,15 +535,10 @@ bool MainWindow::playSpecifiedFile(LPCWSTR fileName) {
             break;
         }
         _opened = false;
-
-        //if (!preparePlayFile(hwnd, fileName, initGlobalLyrics, resetLyricsLocation, setNotifyIconText)) {
-        //    break;
-        //}
-        {
-            if (!_player.openFile(_hSelf, fileName)) {
-                break;
-            }
+        if (!_player.openFile(_hSelf, fileName)) {
+            break;
         }
+        //TODO: setNotifyIconText
 
         _opened = true;
         if (!resume()) {
@@ -553,17 +549,13 @@ bool MainWindow::playSpecifiedFile(LPCWSTR fileName) {
         setupProgress();
         _desktopWindow.openMatchedLyrics(fileName);
 
-        //if (!beginPlayCurFile(hwnd, holdAudioLength)) {
-        //    break;
-        //}
-
         return true;
 
     } while (0);
 
     ::KillTimer(_hSelf, IDT_PLAYER_TIMER);
     ::SendMessageW(_hSelf, WM_SETTEXT, 0, reinterpret_cast<LPARAM>(APP_NAME));
-    //(*setNotifyIconText)(hwnd, APP_NAME);
+    //TODO: setNotifyIconText
     stop();
 
     return false;
