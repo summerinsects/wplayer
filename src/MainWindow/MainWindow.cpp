@@ -1,6 +1,9 @@
 ﻿#include "MainWindow.h"
 #include <commdlg.h>
+#include <CommCtrl.h>
 #include "../base/Common.h"
+
+#define APP_NAME L"wplayer"
 
 #define IDB_MUTE 0x2000
 #define IDB_PLAY 0x2001
@@ -50,6 +53,11 @@
 
 #define IDM_NOTIFY_RECOVERY 0x3500
 
+#define IDT_PLAYER_TIMER 0x4000
+
+#define PROGRESS_SCALE 1000
+#define FRAME_DELAY 30
+
 int MainWindow::run(HINSTANCE hInstance, int iCmdShow) {
     s_hInstance = hInstance;
 
@@ -76,7 +84,7 @@ int MainWindow::run(HINSTANCE hInstance, int iCmdShow) {
 
     int width = 300, height = 400;
 
-    HWND hwnd = ::CreateWindowExW(0, wc.lpszClassName, L"wplayer",
+    HWND hwnd = ::CreateWindowExW(0, wc.lpszClassName, APP_NAME,
         WS_POPUP | WS_SYSMENU | WS_CAPTION | WS_MINIMIZEBOX,
         (xScreen - width) / 2, (yScreen - height) / 2, width, height,
         NULL, NULL, hInstance, this);
@@ -116,7 +124,7 @@ LRESULT MainWindow::runProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 
         RECT rect;
         ::GetClientRect(hwnd, &rect);
-        ::FillRect(hdc, &rect, (HBRUSH)(COLOR_BTNFACE + 1));
+        ::FillRect(hdc, &rect, reinterpret_cast<HBRUSH>(COLOR_BTNFACE + 1));
         ::EndPaint(hwnd, &ps);
         return 0;
     }
@@ -126,28 +134,30 @@ LRESULT MainWindow::runProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
     }
 
     case WM_NOTIFY: {
-        LONG_PTR userData = ::GetWindowLongPtrW((HWND)lParam, GWLP_USERDATA);
+        LONG_PTR userData = ::GetWindowLongPtrW(reinterpret_cast<LPNMHDR>(lParam)->hwndFrom, GWLP_USERDATA);
         if (userData != 0) {
             PlayListView *listView = reinterpret_cast<PlayListView *>(userData);
-            if (((LPNMHDR)lParam)->hwndFrom == listView->getHWnd()) {
-                listView->onNotify(wParam, lParam);
-                return 0;
-            }
+            listView->onNotify(wParam, lParam);
+            return 0;
         }
         break;
     }
 
     case WM_HSCROLL: {
-        LONG_PTR userData = ::GetWindowLongPtrW((HWND)lParam, GWLP_USERDATA);
+        LONG_PTR userData = ::GetWindowLongPtrW(reinterpret_cast<HWND>(lParam), GWLP_USERDATA);
         if (userData != 0) {
             TrackBar *trackBar = reinterpret_cast<TrackBar *>(userData);
-            if ((HWND)lParam == trackBar->getHWnd()) {
+            if (reinterpret_cast<HWND>(lParam) == trackBar->getHWnd()) {
                 trackBar->onHScroll(wParam, lParam);
                 return 0;
             }
         }
         break;
     }
+
+    case WM_TIMER:
+        onTimer();
+        return 0;
 
     case WM_DESTROY:
         ::PostQuitMessage(0);
@@ -169,27 +179,41 @@ void MainWindow::initWidgets() {
     _listView.init(_hSelf, POINT{ 10, 120 }, SIZE{ width - 20, height - 130 });
 
     _progressTrack.init(_hSelf, POINT{ 10, 30 }, SIZE{ width - 20, 20 });
-    _progressTrack.setPosChangedListener([](TrackBar *, LONG_PTR pos) { printf("dfsafdassfdasfda\n"); });
     _volumeTrack.init(_hSelf, POINT{ 10, 80 }, SIZE{ 110, 20 });
+    ::SendMessageW(_volumeTrack.getHWnd(), TBM_SETRANGE, static_cast<WPARAM>(FALSE), MAKELPARAM(0, 100));
+    ::SendMessageW(_volumeTrack.getHWnd(), TBM_SETPOS, static_cast<WPARAM>(TRUE), static_cast<LPARAM>(50));
 
-    _hPlayButton = Common::createButton(_hSelf, POINT{ (width - 40) >> 1, 60 }, SIZE{ 40, 40 }, L">", (HMENU)IDB_PLAY);
-    _hPrevButton = Common::createButton(_hSelf, POINT{ width - 115, 65 }, SIZE{ 30, 30 }, L"|<<", (HMENU)IDB_PREV);
-    _hNextButton = Common::createButton(_hSelf, POINT{ width - 80, 65 }, SIZE{ 30, 30 }, L">>|", (HMENU)IDB_NEXT);
-    _hStopButton = Common::createButton(_hSelf, POINT{ width - 45, 65 }, SIZE{ 30, 30 }, L"■", (HMENU)IDB_STOP);
-    _hMuteButton = Common::createCheckBox(_hSelf, POINT{ 20, 60 }, SIZE{ 50, 20 }, L"静音", (HMENU)IDB_MUTE);
+    _progressTrack.setTrackingListener([this](TrackBar *, LONG_PTR pos) {
+        refreshCurrentTime(pos * PROGRESS_SCALE);
+    });
+    _progressTrack.setPosChangedListener([this](TrackBar *, LONG_PTR pos) {
+        _player.seekTo(_hSelf, static_cast<DWORD>(pos * PROGRESS_SCALE), _playing);
+    });
+    _volumeTrack.setPosChangedListener([this](TrackBar *, LONG_PTR pos) {
+        _volume = static_cast<int>(pos) * 10;
+        if (!_muting) {
+            _player.setVolume(_hSelf, _volume);
+        }
+    });
+
+    _hPlayButton = Common::createButton(_hSelf, POINT{ (width - 40) >> 1, 60 }, SIZE{ 40, 40 }, L">", reinterpret_cast<HMENU>(IDB_PLAY));
+    _hPrevButton = Common::createButton(_hSelf, POINT{ width - 115, 65 }, SIZE{ 30, 30 }, L"|<<", reinterpret_cast<HMENU>(IDB_PREV));
+    _hNextButton = Common::createButton(_hSelf, POINT{ width - 80, 65 }, SIZE{ 30, 30 }, L">>|", reinterpret_cast<HMENU>(IDB_NEXT));
+    _hStopButton = Common::createButton(_hSelf, POINT{ width - 45, 65 }, SIZE{ 30, 30 }, L"■", reinterpret_cast<HMENU>(IDB_STOP));
+    _hMuteButton = Common::createCheckBox(_hSelf, POINT{ 20, 60 }, SIZE{ 50, 20 }, L"静音", reinterpret_cast<HMENU>(IDB_MUTE));
 
     _hCurrentTime = Common::createStatic(_hSelf, POINT{ 15, 10 }, SIZE{ 70, 20 }, L"00:00.00");
     _hTotalTime = Common::createStatic(_hSelf, POINT{ width - 85, 10 }, SIZE{ 70, 20 }, L"00:00.00");
     ::SetWindowLongPtrW(_hTotalTime, GWL_STYLE, ::GetWindowLongPtrW(_hTotalTime , GWL_STYLE) | SS_RIGHT);
 
-    HFONT hFont = (HFONT)::SendMessageW(_listView.getHWnd(), WM_GETFONT, 0, 0);
-    ::SendMessageW(_hPlayButton, WM_SETFONT, (WPARAM)hFont, (LPARAM)FALSE);
-    ::SendMessageW(_hPrevButton, WM_SETFONT, (WPARAM)hFont, (LPARAM)FALSE);
-    ::SendMessageW(_hNextButton, WM_SETFONT, (WPARAM)hFont, (LPARAM)FALSE);
-    ::SendMessageW(_hStopButton, WM_SETFONT, (WPARAM)hFont, (LPARAM)FALSE);
-    ::SendMessageW(_hMuteButton, WM_SETFONT, (WPARAM)hFont, (LPARAM)FALSE);
-    ::SendMessageW(_hCurrentTime, WM_SETFONT, (WPARAM)hFont, (LPARAM)FALSE);
-    ::SendMessageW(_hTotalTime, WM_SETFONT, (WPARAM)hFont, (LPARAM)FALSE);
+    HFONT hFont = reinterpret_cast<HFONT>(::SendMessageW(_listView.getHWnd(), WM_GETFONT, 0, 0));
+    ::SendMessageW(_hPlayButton, WM_SETFONT, reinterpret_cast<WPARAM>(hFont), static_cast<LPARAM>(FALSE));
+    ::SendMessageW(_hPrevButton, WM_SETFONT, reinterpret_cast<WPARAM>(hFont), static_cast<LPARAM>(FALSE));
+    ::SendMessageW(_hNextButton, WM_SETFONT, reinterpret_cast<WPARAM>(hFont), static_cast<LPARAM>(FALSE));
+    ::SendMessageW(_hStopButton, WM_SETFONT, reinterpret_cast<WPARAM>(hFont), static_cast<LPARAM>(FALSE));
+    ::SendMessageW(_hMuteButton, WM_SETFONT, reinterpret_cast<WPARAM>(hFont), static_cast<LPARAM>(FALSE));
+    ::SendMessageW(_hCurrentTime, WM_SETFONT, reinterpret_cast<WPARAM>(hFont), static_cast<LPARAM>(FALSE));
+    ::SendMessageW(_hTotalTime, WM_SETFONT, reinterpret_cast<WPARAM>(hFont), static_cast<LPARAM>(FALSE));
 
     _desktopWindow.init();
 }
@@ -208,11 +232,11 @@ void MainWindow::initMenu() {
 
     HMENU hPlayerMenu = ::CreateMenu();
 
-    ::AppendMenuW(hPlayerMenu, MF_POPUP, (UINT_PTR)hFileMenu, L"文件(&F)");
-    ::AppendMenuW(hPlayerMenu, MF_POPUP, (UINT_PTR)hSettingMenu, L"设置(&S)");
-    ::AppendMenuW(hPlayerMenu, MF_POPUP, (UINT_PTR)hOperateMenu, L"操作(&O)");
-    ::AppendMenuW(hPlayerMenu, MF_POPUP, (UINT_PTR)hToolMenu, L"工具(&T)");
-    ::AppendMenuW(hPlayerMenu, MF_POPUP, (UINT_PTR)hHelpMenu, L"帮助(&H)");
+    ::AppendMenuW(hPlayerMenu, MF_POPUP, reinterpret_cast<UINT_PTR>(hFileMenu), L"文件(&F)");
+    ::AppendMenuW(hPlayerMenu, MF_POPUP, reinterpret_cast<UINT_PTR>(hSettingMenu), L"设置(&S)");
+    ::AppendMenuW(hPlayerMenu, MF_POPUP, reinterpret_cast<UINT_PTR>(hOperateMenu), L"操作(&O)");
+    ::AppendMenuW(hPlayerMenu, MF_POPUP, reinterpret_cast<UINT_PTR>(hToolMenu), L"工具(&T)");
+    ::AppendMenuW(hPlayerMenu, MF_POPUP, reinterpret_cast<UINT_PTR>(hHelpMenu), L"帮助(&H)");
 
     ::AppendMenuW(hFileMenu, MF_STRING, IDM_FILE_LOAD, L"载入(&L)...");
     ::AppendMenuW(hFileMenu, MF_SEPARATOR, 0, nullptr);
@@ -223,7 +247,7 @@ void MainWindow::initMenu() {
     ::AppendMenuW(hSettingMenu, MF_STRING, IDM_SETTING_LOCK, L"锁定歌词(&L)");
     ::AppendMenuW(hSettingMenu, MF_STRING, IDM_SETTING_STYLE, L"歌词样式(&S)...");
     ::AppendMenuW(hSettingMenu, MF_SEPARATOR, 0, nullptr);
-    ::AppendMenuW(hSettingMenu, MF_POPUP, (UINT_PTR)hPlayModeMenu, L"播放模式(&M)");
+    ::AppendMenuW(hSettingMenu, MF_POPUP, reinterpret_cast<UINT_PTR>(hPlayModeMenu), L"播放模式(&M)");
 
     ::AppendMenuW(hPlayModeMenu, MF_STRING, IDM_SETTING_LOOP, L"列表循环");
     ::AppendMenuW(hPlayModeMenu, MF_STRING, IDM_SETTING_ORDER, L"顺序播放");
@@ -240,8 +264,8 @@ void MainWindow::initMenu() {
     ::AppendMenuW(hOperateMenu, MF_STRING, IDM_OPERATE_PREV, L"上一曲(&V)");
     ::AppendMenuW(hOperateMenu, MF_STRING, IDM_OPERATE_NEXT, L"下一曲(&N)");
     ::AppendMenuW(hOperateMenu, MF_SEPARATOR, 0, nullptr);
-    ::AppendMenuW(hOperateMenu, MF_POPUP, (UINT_PTR)hAheadMenu, L"歌词提前(&A)");
-    ::AppendMenuW(hOperateMenu, MF_POPUP, (UINT_PTR)hDelayMenu, L"歌词延后(&D)");
+    ::AppendMenuW(hOperateMenu, MF_POPUP, reinterpret_cast<UINT_PTR>(hAheadMenu), L"歌词提前(&A)");
+    ::AppendMenuW(hOperateMenu, MF_POPUP, reinterpret_cast<UINT_PTR>(hDelayMenu), L"歌词延后(&D)");
 
     ::AppendMenuW(hAheadMenu, MF_STRING, IDM_OPERATE_AHEAD_100MS, L"提前0.1秒");
     ::AppendMenuW(hAheadMenu, MF_STRING, IDM_OPERATE_AHEAD_200MS, L"提前0.2秒");
@@ -377,9 +401,11 @@ void MainWindow::onCommand(WPARAM wParam) {
         break;
 
     case IDB_MUTE:
+        toggleMute();
         break;
 
     case IDB_PLAY:
+        onPlay();
         break;
 
     case IDB_PREV:
@@ -389,6 +415,7 @@ void MainWindow::onCommand(WPARAM wParam) {
         break;
 
     case IDB_STOP:
+        stop();
         break;
 
     default:
@@ -429,6 +456,186 @@ bool MainWindow::loadFile() {
             return false;
         }
     }
+
+    return true;
+}
+
+bool MainWindow::onPlay() {
+    if (_playing) {
+        return pause();
+    }
+    else {
+        if (_opened) {
+            return resume();
+        }
+        else {
+            return playSpecifiedFile(_listView.getSelectedFile());
+        }
+    }
+}
+
+bool MainWindow::pause() {
+    if (! _player.pause(_hSelf)) {
+        return false;
+    }
+
+    ::SendMessageW(_hPlayButton, WM_SETTEXT, 0, reinterpret_cast<LPARAM>(L">"));
+    _playing = false;
+    ::KillTimer(_hSelf, IDT_PLAYER_TIMER);
+    return true;
+}
+
+bool MainWindow::resume() {
+    _playing = false;
+    if (_muting) {
+        if (!_player.setVolume(_hSelf, 0)) {
+            return false;
+        }
+    }
+    else {
+        _volume = static_cast<int>(::SendMessageW(_volumeTrack.getHWnd(), TBM_GETPOS, 0, 0)) * 10;
+        if (!_player.setVolume(_hSelf, static_cast<DWORD>(_volume))) {
+            return false;
+        }
+    }
+
+    if (_player.play(_hSelf)) {
+        ::SendMessageW(_hPlayButton, WM_SETTEXT, 0, reinterpret_cast<LPARAM>(L"||"));
+        ::SetTimer(_hSelf, IDT_PLAYER_TIMER, FRAME_DELAY, nullptr);
+
+        _playing = true;
+        return true;
+    }
+
+    return false;
+}
+
+bool MainWindow::stop() {
+    if (!_opened) {
+        _playing = false;
+        return true;
+    }
+
+    if (_player.closeFile(_hSelf)) {
+        _opened = false;
+        _playing = false;
+        refreshPlayerControls(0);
+        ::SendMessageW(_hPlayButton, WM_SETTEXT, 0, reinterpret_cast<LPARAM>(L">"));
+        ::KillTimer(_hSelf, IDT_PLAYER_TIMER);
+        return true;
+    }
+
+    return false;
+}
+
+bool MainWindow::playSpecifiedFile(LPCWSTR fileName) {
+    do {
+        if (_opened && !_player.closeFile(_hSelf)) {
+            break;
+        }
+        _opened = false;
+
+        //if (!preparePlayFile(hwnd, fileName, initGlobalLyrics, resetLyricsLocation, setNotifyIconText)) {
+        //    break;
+        //}
+        {
+            if (!_player.openFile(_hSelf, fileName)) {
+                break;
+            }
+        }
+
+        _opened = true;
+        if (!resume()) {
+            break;
+        }
+
+        _audioLength = _player.getLength(_hSelf);
+        setupProgress();
+        _desktopWindow.openMatchedLyrics(fileName);
+
+        //if (!beginPlayCurFile(hwnd, holdAudioLength)) {
+        //    break;
+        //}
+
+        return true;
+
+    } while (0);
+
+    ::KillTimer(_hSelf, IDT_PLAYER_TIMER);
+    ::SendMessageW(_hSelf, WM_SETTEXT, 0, reinterpret_cast<LPARAM>(APP_NAME));
+    //(*setNotifyIconText)(hwnd, APP_NAME);
+    stop();
+
+    return false;
+}
+
+void MainWindow::refreshCurrentTime(LONG_PTR pos) {
+    WCHAR textBuf[32];
+    ldiv_t ret1, ret2;
+
+    ret1 = ldiv(static_cast<long>(pos), 60000L);
+    ret2 = ldiv(ret1.rem, 1000L);
+
+    _snwprintf(textBuf, 32, L"%.2ld:%.2ld.%.2ld", ret1.quot, ret2.quot, ret2.rem / 10L);
+    ::SendMessageW(_hCurrentTime, WM_SETTEXT, 0, reinterpret_cast<LPARAM>(textBuf));
+}
+
+void MainWindow::refreshPlayerControls(DWORD_PTR curTime) {
+    if (_progressTrack.isTracking()) {
+        return;
+    }
+
+    refreshCurrentTime(curTime);
+    ::SendMessageW(_progressTrack.getHWnd(), TBM_SETPOS, static_cast<WPARAM>(TRUE), static_cast<LPARAM>(curTime / PROGRESS_SCALE));  // 设置进度位置
+}
+
+void MainWindow::setupProgress() {
+    WCHAR textBuf[32];
+    ldiv_t ret1, ret2;
+
+    ret1 = ldiv((long)_audioLength, 60000);
+    ret2 = ldiv(ret1.rem, 1000);
+
+    _snwprintf(textBuf, 32, L"%.2ld:%.2ld.%.2ld", ret1.quot, ret2.quot, ret2.rem / 10);
+
+    ::SendMessageW(_hTotalTime, WM_SETTEXT, 0, reinterpret_cast<LPARAM>(textBuf));  // 总时间
+    ::SendMessageW(_hCurrentTime, WM_SETTEXT, 0, reinterpret_cast<LPARAM>(L"00:00.00"));  // 当前时间
+
+    ::SendMessageW(_progressTrack.getHWnd(), TBM_SETRANGEMAX, static_cast<WPARAM>(TRUE), static_cast<LPARAM>(_audioLength / PROGRESS_SCALE));  // 进度
+}
+
+void MainWindow::toggleMute() {
+    if (_muting) {
+        _volume = static_cast<int>(::SendMessageW(_volumeTrack.getHWnd(), TBM_GETPOS, 0, 0)) * 10;
+        if (_player.setVolume(_hSelf, static_cast<DWORD>(_volume))) {
+            ::SendMessageW(_hMuteButton, BM_SETCHECK, static_cast<WPARAM>(FALSE), 0);
+            _muting = false;
+        }
+    }
+    else {
+        if (_player.setVolume(_hSelf, 0)) {
+            ::SendMessageW(_hMuteButton, BM_SETCHECK, static_cast<WPARAM>(TRUE), 0);
+            _muting = TRUE;
+        }
+    }
+}
+
+bool MainWindow::onTimer() {
+    DWORD_PTR curPos = _player.getPos(_hSelf);
+    if (curPos == static_cast<DWORD_PTR>(-1)) {
+        return false;
+    }
+
+    if (_audioLength <= curPos) {  // 已播放完
+        stop();
+        return false;
+    }
+
+    if (::IsWindowVisible(_hSelf)) {
+        refreshPlayerControls(curPos);
+    }
+
+    _desktopWindow.refreshLyrics((int)curPos);
 
     return true;
 }

@@ -5,6 +5,7 @@
 #include "../base/TrackBar.h"
 #include "../PlayerControls/PlayListView.h"
 #include "../DesktopWindow/DesktopWindow.h"
+#include "../AudioSupport/MciPlayer.h"
 
 class MainWindow : public Window {
 public:
@@ -18,6 +19,16 @@ private:
     void initMenu();
     void onCommand(WPARAM wParam);
     bool loadFile();
+    bool onPlay();
+    bool pause();
+    bool resume();
+    bool stop();
+    bool playSpecifiedFile(LPCWSTR fileName);
+    void refreshPlayerControls(DWORD_PTR curTime);
+    void refreshCurrentTime(LONG_PTR pos);
+    void setupProgress();
+    void toggleMute();
+    bool onTimer();
 
     HWND _hCurrentTime;
     HWND _hTotalTime;
@@ -31,6 +42,12 @@ private:
     TrackBar _progressTrack;
     PlayListView _listView;
     DesktopWindow _desktopWindow;
+    MciPlayer _player;
+    bool _opened = false;
+    bool _playing = false;
+    bool _muting = false;
+    int _volume = 0;
+    DWORD_PTR _audioLength = 0;
 };
 
 #endif

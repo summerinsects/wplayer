@@ -7,6 +7,9 @@ class DesktopWindow : public Window {
 public:
     bool init();
 
+    bool openMatchedLyrics(LPCWSTR fileName);
+    void refreshLyrics(int time);
+
 private:
     HWND _hWndTool = NULL;
 

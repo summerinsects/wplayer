@@ -19,17 +19,23 @@
     <Filter Include="src\base">
       <UniqueIdentifier>{4804a8b0-4a2f-490f-8b9d-d7089dc63537}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\AudioSupport">
+      <UniqueIdentifier>{3c2e0cb7-1b25-4553-ac50-eda90a135116}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\DesktopWindow">
+      <UniqueIdentifier>{b30fc059-6e00-4b52-888b-f89aa6196f7d}</UniqueIdentifier>
+    </Filter>
     <Filter Include="src\MainWindow">
       <UniqueIdentifier>{8e3d9408-5d45-467a-9ace-d19f637704d0}</UniqueIdentifier>
     </Filter>
     <Filter Include="src\PlayerControls">
       <UniqueIdentifier>{9a134cd5-8323-4f33-99e2-5ce887aa507d}</UniqueIdentifier>
     </Filter>
-    <Filter Include="src\DesktopWindow">
-      <UniqueIdentifier>{b30fc059-6e00-4b52-888b-f89aa6196f7d}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\AudioSupport\MciPlayer.cpp">
+      <Filter>src\AudioSupport</Filter>
+    </ClCompile>
     <ClCompile Include="src\base\Common.cpp">
       <Filter>src\base</Filter>
     </ClCompile>
@@ -53,6 +59,9 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\AudioSupport\MciPlayer.h">
+      <Filter>src\AudioSupport</Filter>
+    </ClInclude>
     <ClInclude Include="src\base\Common.h">
       <Filter>src\base</Filter>
     </ClInclude>

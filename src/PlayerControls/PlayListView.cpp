@@ -19,9 +19,9 @@ bool PlayListView::init(HWND hPerent, const POINT &pos, const SIZE &size) {
         hPerent, NULL, s_hInstance, nullptr);
 
     ::SetWindowLongPtrW(_hSelf, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
-    ::SendMessageW(_hSelf, LVM_SETEXTENDEDLISTVIEWSTYLE, 0, (LPARAM)(LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES));
+    ::SendMessageW(_hSelf, LVM_SETEXTENDEDLISTVIEWSTYLE, 0, static_cast<LPARAM>(LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES));
 
-    _defaultProc = (WNDPROC)::SetWindowLongPtrW(_hSelf, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(&PlayListView::ListViewProc));
+    _defaultProc = reinterpret_cast<WNDPROC>(::SetWindowLongPtrW(_hSelf, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(&PlayListView::ListViewProc)));
 
     initColumns();
 
@@ -36,7 +36,7 @@ void PlayListView::initColumns() {
     for (size_t i = 0, cnt = _countof(s_colInfo); i < cnt; ++i) {
         listCol.cx = s_colInfo[i].width;
         listCol.pszText = s_colInfo[i].text;
-        ::SendMessageW(_hSelf, LVM_INSERTCOLUMNW, (WPARAM)i, (LPARAM)&listCol);
+        ::SendMessageW(_hSelf, LVM_INSERTCOLUMNW, static_cast<WPARAM>(i), reinterpret_cast<LPARAM>(&listCol));
     }
 }
 
@@ -47,7 +47,7 @@ LRESULT CALLBACK PlayListView::ListViewProc(HWND hwnd, UINT message, WPARAM wPar
 
 LRESULT PlayListView::runProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     if (message == WM_DROPFILES) {  // 拦截文件拉拽消息
-        HDROP hDrop = (HDROP)wParam;
+        HDROP hDrop = reinterpret_cast<HDROP>(wParam);
         UINT count = ::DragQueryFileW(hDrop, 0xFFFFFFFFU, nullptr, 0);  // 获取文件总数
 
         WCHAR fileName[_MAX_PATH];
@@ -60,9 +60,9 @@ LRESULT PlayListView::runProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
             }
 
             // TODO:
-            //if (_tcscmp(dot, TEXT(".mp3")) == 0) {  // 检测扩展名
-            insertListItem(fileName);  // 添加文件
-            //}
+            if (wcscmp(dot, L".mp3") == 0) {  // 检测扩展名
+                insertListItem(fileName);  // 添加文件
+            }
         }
 
         ::DragFinish(hDrop);
@@ -91,8 +91,9 @@ bool PlayListView::insertListItem(LPCWSTR fileName) {
     listItem.iItem = static_cast<int>(_files.size());
     listItem.iSubItem = 0;//IDX_FILENAME;
     listItem.lParam = 0;// (LPARAM)gs_ppFileList[gs_iListCount];
-    ::SendMessageW(_hSelf, LVM_INSERTITEMW, 0, (LPARAM)&listItem);
+    ::SendMessageW(_hSelf, LVM_INSERTITEMW, 0, reinterpret_cast<LPARAM>(&listItem));
 
+    _selectedIdx = static_cast<int>(_files.size());
     _files.push_back(fileName);
 
     // 更新头
@@ -104,13 +105,13 @@ bool PlayListView::insertListItem(LPCWSTR fileName) {
     listCol.cchTextMax = 128;
 
     listCol.pszText = textBuf;
-    ::SendMessageW(_hSelf, LVM_SETCOLUMNW, (WPARAM)0, (LPARAM)&listCol);
+    ::SendMessageW(_hSelf, LVM_SETCOLUMNW, static_cast<WPARAM>(0), reinterpret_cast<LPARAM>(&listCol));
 
     return true;
 }
 
 void PlayListView::onNotify(WPARAM wParam, LPARAM lParam) {
-    switch (((LPNMHDR)lParam)->code) {
+    switch (reinterpret_cast<LPNMHDR>(lParam)->code) {
     case LVN_COLUMNCLICK:
         if (_files.empty()) {
             break;
@@ -119,21 +120,34 @@ void PlayListView::onNotify(WPARAM wParam, LPARAM lParam) {
         break;
 
     case NM_CLICK: {  // 单击
-        LPNMITEMACTIVATE ia = (LPNMITEMACTIVATE)lParam;
+        LPNMITEMACTIVATE ia = reinterpret_cast<LPNMITEMACTIVATE>(lParam);
+        _selectedIdx = ia->iItem;
         break;
     }
 
     case NM_DBLCLK: {  // 双击
-        LPNMITEMACTIVATE ia = (LPNMITEMACTIVATE)lParam;
+        LPNMITEMACTIVATE ia = reinterpret_cast<LPNMITEMACTIVATE>(lParam);
+        _selectedIdx = ia->iItem;
+        HWND hParent = ::GetParent(_hSelf);
+        ::SendMessageW(hParent, WM_COMMAND, MAKEWPARAM(/*IDB_STOP*/0x2004, 0), 0);  // 停止
+        ::SendMessageW(hParent, WM_COMMAND, MAKEWPARAM(/*IDB_PLAY*/0x2001, 0), 0);  // 播放
         break;
     }
 
     case NM_RCLICK: {  // 右键
-        LPNMITEMACTIVATE ia = (LPNMITEMACTIVATE)lParam;
+        LPNMITEMACTIVATE ia = reinterpret_cast<LPNMITEMACTIVATE>(lParam);
         break;
     }
 
     default:
         break;
     }
+}
+
+LPCWSTR PlayListView::getSelectedFile() const {
+    if (_selectedIdx < 0 || static_cast<size_t>(_selectedIdx) >= _files.size()) {
+        return nullptr;
+    }
+
+    return _files.at(_selectedIdx).c_str();
 }

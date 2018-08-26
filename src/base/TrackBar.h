@@ -11,9 +11,9 @@ class TrackBar : public Window {
 public:
     bool init(HWND hPerent, const POINT &pos, const SIZE &size);
 
-    bool setRange(WORD min, WORD max);
     void onHScroll(WPARAM wParam, LPARAM lParam);
 
+    bool isTracking() const { return _isTracking; }
     void setPosChangedListener(std::function<void (TrackBar *thiz, LONG_PTR pos)> onPosChanged) { _onPosChanged.swap(onPosChanged); }
     void setTrackingListener(std::function<void (TrackBar *thiz, LONG_PTR pos)> onTracking) { _onTracking.swap(onTracking); }
 

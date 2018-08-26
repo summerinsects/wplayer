@@ -30,7 +30,7 @@ bool DesktopWindow::init() {
         x, y, width, height, NULL, NULL, s_hInstance, this);
 
     wc.lpfnWndProc = &DesktopWindow::ToolWndProc;
-    wc.hbrBackground = (HBRUSH)::GetStockObject(BLACK_BRUSH);
+    wc.hbrBackground = static_cast<HBRUSH>(::GetStockObject(BLACK_BRUSH));
     wc.lpszClassName = L"DesktopToolWindow";
 
     if (!::RegisterClassW(&wc) && ::GetLastError() != ERROR_ALREADY_REGISTERED) {
@@ -114,7 +114,7 @@ LRESULT DesktopWindow::runToolProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
     //}
 
     case WM_LBUTTONDOWN:
-        return ::DefWindowProcW(hwnd, WM_SYSCOMMAND, (WPARAM)(SC_MOVE | HTCAPTION), 0);
+        return ::DefWindowProcW(hwnd, WM_SYSCOMMAND, static_cast<WPARAM>(SC_MOVE | HTCAPTION), 0);
 
     //case WM_NCACTIVATE:
     //    if (!wParam)
@@ -185,7 +185,7 @@ LRESULT DesktopWindow::runToolProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
         ::ShowWindow(hwnd, SW_SHOWNORMAL);
 
         // 使歌词窗口随之移动/缩放
-        LPCRECT pRect = (LPCRECT)lParam;
+        LPCRECT pRect = reinterpret_cast<LPCRECT>(lParam);
         ::MoveWindow(_hSelf, pRect->left, pRect->top, pRect->right - pRect->left, pRect->bottom - pRect->top, FALSE);
     }
     return TRUE;
@@ -196,7 +196,7 @@ LRESULT DesktopWindow::runToolProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
 
     case WM_GETMINMAXINFO: {
         // 限制最小尺寸
-        LPMINMAXINFO pMinMaxInfo = (LPMINMAXINFO)lParam;
+        LPMINMAXINFO pMinMaxInfo = reinterpret_cast<LPMINMAXINFO>(lParam);
 
         ::ShowWindow(hwnd, SW_SHOWNORMAL);
 
@@ -218,4 +218,22 @@ LRESULT DesktopWindow::runToolProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
     }
 
     return ::DefWindowProcW(hwnd, message, wParam, lParam);
+}
+
+bool DesktopWindow::openMatchedLyrics(LPCWSTR fileName) {
+    LPCWSTR dot = wcsrchr(fileName, L'.');
+    if (dot == nullptr) {
+        return false;
+    }
+
+    WCHAR name[MAX_PATH] = L"";
+    wcsncpy(name, fileName, dot - fileName);
+    wcscat(name, L".krc");
+
+    // TODO:
+    return true;
+}
+
+void DesktopWindow::refreshLyrics(int time) {
+    // TODO:
 }

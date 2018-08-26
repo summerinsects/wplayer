@@ -11,6 +11,7 @@ public:
 
     void onNotify(WPARAM wParam, LPARAM lParam);
     bool insertListItem(LPCWSTR fileName);
+    LPCWSTR getSelectedFile() const;
 
 protected:
     void initColumns();
@@ -19,6 +20,7 @@ protected:
     LRESULT runProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 
     std::vector<std::wstring> _files;
+    int _selectedIdx = -1;
 };
 
 #endif

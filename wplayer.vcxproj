@@ -115,6 +115,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\AudioSupport\MciPlayer.cpp" />
     <ClCompile Include="src\base\Common.cpp" />
     <ClCompile Include="src\base\TrackBar.cpp" />
     <ClCompile Include="src\base\Window.cpp" />
@@ -124,6 +125,7 @@
     <ClCompile Include="src\PlayerControls\PlayListView.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\AudioSupport\MciPlayer.h" />
     <ClInclude Include="src\base\Common.h" />
     <ClInclude Include="src\base\TrackBar.h" />
     <ClInclude Include="src\base\Window.h" />
