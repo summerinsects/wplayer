@@ -15,7 +15,7 @@ bool DesktopWindow::init() {
     WNDCLASSW wc;
 
     wc.style = CS_HREDRAW | CS_VREDRAW;
-    wc.lpfnWndProc = &DesktopWindow::LyricsWndProc;
+    wc.lpfnWndProc = ::DefWindowProcW;
     wc.cbClsExtra = 0;
     wc.cbWndExtra = 0;
     wc.hInstance = s_hInstance;
@@ -38,20 +38,17 @@ bool DesktopWindow::init() {
     _hSelf = ::CreateWindowExW(WS_EX_TOPMOST | WS_EX_LAYERED | WS_EX_TOOLWINDOW | WS_EX_TRANSPARENT,
         wc.lpszClassName, nullptr,
         WS_POPUP | WS_VISIBLE | WS_CLIPSIBLINGS,
-        x, y, width, height, NULL, NULL, s_hInstance, this);
-
-    wc.lpfnWndProc = &DesktopWindow::ToolWndProc;
-    wc.hbrBackground = static_cast<HBRUSH>(::GetStockObject(BLACK_BRUSH));
-    wc.lpszClassName = L"DesktopToolWindow";
-
-    if (!::RegisterClassW(&wc) && ::GetLastError() != ERROR_ALREADY_REGISTERED) {
-        return false;
-    }
+        x, y, width, height, NULL, NULL, s_hInstance, nullptr);
+    ::SetWindowLongPtrW(_hSelf, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
+    ::SetWindowLongPtrW(_hSelf, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(&DesktopWindow::LyricsWndProc));
 
     _hWndTool = ::CreateWindowExW(WS_EX_TOPMOST | WS_EX_LAYERED | WS_EX_TOOLWINDOW,
         wc.lpszClassName, nullptr,
         WS_POPUP | WS_CLIPSIBLINGS | WS_THICKFRAME,
-        x, y, width, height, NULL, NULL, s_hInstance, this);
+        x, y, width, height, NULL, NULL, s_hInstance, nullptr);
+    ::SetWindowLongPtrW(_hWndTool, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
+    ::SetWindowLongPtrW(_hWndTool, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(&DesktopWindow::ToolWndProc));
+    ::SetClassLongPtrW(_hWndTool, GCLP_HBRBACKGROUND, reinterpret_cast<LONG_PTR>(::GetStockObject(BLACK_BRUSH)));
 
     ::SetLayeredWindowAttributes(_hWndTool, 0, 40, LWA_ALPHA);
 
@@ -87,11 +84,6 @@ bool DesktopWindow::init() {
 }
 
 LRESULT CALLBACK DesktopWindow::LyricsWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
-    if (message == WM_CREATE) {
-        ::SetWindowLongPtrW(hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>((LPCREATESTRUCTW(lParam))->lpCreateParams));
-        return 0;
-    }
-
     DesktopWindow *thiz = reinterpret_cast<DesktopWindow *>(::GetWindowLongPtrW(hwnd, GWLP_USERDATA));
     return thiz->runLyricsProc(hwnd, message, wParam, lParam);
 }
@@ -117,11 +109,6 @@ LRESULT DesktopWindow::runLyricsProc(HWND hwnd, UINT message, WPARAM wParam, LPA
 }
 
 LRESULT CALLBACK DesktopWindow::ToolWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
-    if (message == WM_CREATE) {
-        ::SetWindowLongPtrW(hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>((LPCREATESTRUCTW(lParam))->lpCreateParams));
-        return 0;
-    }
-
     DesktopWindow *thiz = reinterpret_cast<DesktopWindow *>(::GetWindowLongPtrW(hwnd, GWLP_USERDATA));
     return thiz->runToolProc(hwnd, message, wParam, lParam);
 }
