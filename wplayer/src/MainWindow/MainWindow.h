@@ -18,6 +18,7 @@ private:
     void initWidgets();
     void initMenu();
     void onCommand(WPARAM wParam);
+    void onInitMenuPopup(HMENU hMenu);
     bool loadFile();
     bool onPlay();
     bool pause();
@@ -29,6 +30,10 @@ private:
     void setupProgress();
     void toggleMute();
     bool onTimer();
+
+    HMENU _hSettingMenu;
+    HMENU _hPlayModeMenu;
+    HMENU _hNotifyMenu;
 
     HWND _hCurrentTime;
     HWND _hTotalTime;

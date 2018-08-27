@@ -238,6 +238,20 @@ LRESULT DesktopWindow::runToolProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
     return ::DefWindowProcW(hwnd, message, wParam, lParam);
 }
 
+void DesktopWindow::toggleLock() {
+    LONG_PTR style = ::GetWindowLongPtrW(_hSelf, GWL_EXSTYLE);
+    if (style & WS_EX_TRANSPARENT) {
+        ::SetWindowLongPtrW(_hSelf, GWL_EXSTYLE, style & ~WS_EX_TRANSPARENT);
+    }
+    else {
+        ::SetWindowLongPtrW(_hSelf, GWL_EXSTYLE, style | WS_EX_TRANSPARENT);
+    }
+}
+
+bool DesktopWindow::isLock() const {
+    return (::GetWindowLongPtrW(_hSelf, GWL_EXSTYLE) & WS_EX_TRANSPARENT);
+}
+
 static std::wstring UTF8ToWChar(const std::string &utf8) {
     std::wstring ret;
     int len = ::MultiByteToWideChar(CP_UTF8, 0, utf8.c_str(), -1, nullptr, 0);

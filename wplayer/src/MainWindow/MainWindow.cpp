@@ -128,10 +128,14 @@ LRESULT MainWindow::runProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
         ::EndPaint(hwnd, &ps);
         return 0;
     }
-    case WM_COMMAND: {
+
+    case WM_COMMAND:
         onCommand(wParam);
         return 0;
-    }
+
+    case WM_INITMENUPOPUP:
+        onInitMenuPopup(reinterpret_cast<HMENU>(wParam));
+        return 0;
 
     case WM_NOTIFY: {
         LONG_PTR userData = ::GetWindowLongPtrW(reinterpret_cast<LPNMHDR>(lParam)->hwndFrom, GWLP_USERDATA);
@@ -291,6 +295,17 @@ void MainWindow::initMenu() {
     ::AppendMenuW(hHelpMenu, MF_STRING, IDM_HELP_MANUAL, L"说明(&M)...");
 
     ::SetMenu(_hSelf, hPlayerMenu);
+
+    _hSettingMenu = hSettingMenu;
+    _hPlayModeMenu = hPlayModeMenu;
+    _hNotifyMenu = NULL;
+}
+
+void MainWindow::onInitMenuPopup(HMENU hMenu) {
+    if (hMenu == _hSettingMenu || hMenu == _hNotifyMenu) {
+        ::CheckMenuItem(hMenu, IDM_SETTING_DESKTOP, ::IsWindowVisible(_desktopWindow.getHWnd()) ? MF_CHECKED : MF_UNCHECKED);
+        ::CheckMenuItem(hMenu, IDM_SETTING_LOCK, _desktopWindow.isLock() ? MF_CHECKED : MF_UNCHECKED);
+    }
 }
 
 void MainWindow::onCommand(WPARAM wParam) {
@@ -308,6 +323,7 @@ void MainWindow::onCommand(WPARAM wParam) {
         break;
 
     case IDM_SETTING_DESKTOP:
+        ::ShowWindow(_desktopWindow.getHWnd(), ::IsWindowVisible(_desktopWindow.getHWnd()) ? SW_HIDE : SW_SHOW);
         break;
 
     case IDM_SETTING_LOOP:
@@ -326,6 +342,7 @@ void MainWindow::onCommand(WPARAM wParam) {
         break;
 
     case IDM_SETTING_LOCK:
+        _desktopWindow.toggleLock();
         break;
 
     case IDM_SETTING_STYLE:

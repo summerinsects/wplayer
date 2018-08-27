@@ -59,6 +59,9 @@ class DesktopWindow : public Window {
 public:
     bool init();
 
+    void toggleLock();
+    bool isLock() const;
+
     bool openMatchedLyrics(LPCWSTR fileName);
     void refreshLyrics(int time);
     void forceRefresh();
