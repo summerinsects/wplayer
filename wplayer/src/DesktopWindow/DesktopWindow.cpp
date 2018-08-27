@@ -52,7 +52,7 @@ bool DesktopWindow::init() {
 
     ::SetLayeredWindowAttributes(_hWndTool, 0, 40, LWA_ALPHA);
 
-    _mouseEvent.cbSize = sizeof(TRACKMOUSEEVENT);
+    _mouseEvent.cbSize = sizeof(_mouseEvent);
     _mouseEvent.dwFlags = 0;
     _mouseEvent.hwndTrack = NULL;
     _mouseEvent.dwHoverTime = HOVER_DEFAULT;
@@ -886,7 +886,7 @@ void DesktopWindow::drawSentence(const DrawInfo *info1, const DrawInfo *info2) {
     ::GetTextMetricsW(hdcMem, &tm2);
 
     BITMAPINFO bi = { 0 };
-    bi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    bi.bmiHeader.biSize = sizeof(bi.bmiHeader);
     bi.bmiHeader.biWidth = maxWidth;
     bi.bmiHeader.biHeight = maxHeight;
     bi.bmiHeader.biPlanes = 1;
@@ -990,7 +990,7 @@ void DesktopWindow::drawInfo(const std::wstring &text) {
     ::GetTextMetricsW(hdc, &tm1);
 
     BITMAPINFO bi = { 0 };
-    bi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    bi.bmiHeader.biSize = sizeof(bi.bmiHeader);
     bi.bmiHeader.biWidth = maxWidth;
     bi.bmiHeader.biHeight = maxHeight;
     bi.bmiHeader.biPlanes = 1;

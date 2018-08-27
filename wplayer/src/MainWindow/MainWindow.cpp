@@ -429,7 +429,7 @@ bool MainWindow::loadFile() {
     WCHAR fileName[_MAX_PATH], *p;
     OPENFILENAMEW ofn = {0};
 
-    ofn.lStructSize = sizeof(OPENFILENAMEW);
+    ofn.lStructSize = sizeof(ofn);
     ofn.hwndOwner = _hSelf;
     ofn.hInstance = s_hInstance;
     ofn.lpstrFilter = L"音频文件(*.mp3)\0*.mp3\0\0";
