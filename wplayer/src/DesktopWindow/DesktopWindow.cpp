@@ -802,7 +802,7 @@ static RECT setPixelDataForSentence(DWORD *pixelData, LONG maxWidth, LONG maxHei
             }
 
             if (buffSize == 0) {
-                offset += tm1.tmAveCharWidth;
+                offset += gm.gmCellIncX;
                 continue;
             }
 
@@ -826,7 +826,7 @@ static RECT setPixelDataForSentence(DWORD *pixelData, LONG maxWidth, LONG maxHei
             }
 
             if (buffSize == 0) {
-                offset += tm2.tmAveCharWidth;
+                offset += gm.gmCellIncX;
                 continue;
             }
 
@@ -1063,7 +1063,7 @@ void DesktopWindow::drawInfo(const std::wstring &text) {
             }
 
             if (buffSize == 0) {
-                offset += tm1.tmAveCharWidth;
+                offset += gm.gmCellIncX;
                 continue;
             }
 
