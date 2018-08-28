@@ -365,6 +365,7 @@ void DesktopWindow::forceRefresh() {
     _prevDrawInfos.first.sentence = nullptr;
     _prevDrawInfos.second.sentence = nullptr;
     _displayState = DISPLAY_STATE::NONE;
+    clearDraw();
 }
 
 void DesktopWindow::refreshLyrics(int time) {
