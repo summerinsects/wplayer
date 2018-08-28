@@ -194,6 +194,12 @@ void MainWindow::initWidgets() {
         _player.seekTo(_hSelf, static_cast<DWORD>(pos * PROGRESS_SCALE), _playing);
         _desktopWindow.forceRefresh();
     });
+    _volumeTrack.setTrackingListener([this](TrackBar *, LONG_PTR pos) {
+        _volume = static_cast<int>(pos) * 10;
+        if (!_muting) {
+            _player.setVolume(_hSelf, _volume);
+        }
+    });
     _volumeTrack.setPosChangedListener([this](TrackBar *, LONG_PTR pos) {
         _volume = static_cast<int>(pos) * 10;
         if (!_muting) {
