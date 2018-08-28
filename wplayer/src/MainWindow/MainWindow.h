@@ -52,6 +52,7 @@ private:
     bool _playing = false;
     bool _muting = false;
     int _volume = 0;
+    PLAY_MODE _playMode = PLAY_MODE::ALL_REPEAT;
     DWORD_PTR _audioLength = 0;
 };
 

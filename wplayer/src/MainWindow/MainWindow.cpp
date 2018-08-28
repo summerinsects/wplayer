@@ -18,11 +18,11 @@
 #define IDM_SETTING_DESKTOP 0x3100
 #define IDM_SETTING_LOCK 0x3101
 #define IDM_SETTING_STYLE 0x3102
-#define IDM_SETTING_LOOP 0x3110
+#define IDM_SETTING_ALL_REPEAT 0x3110
 #define IDM_SETTING_ORDER 0x3111
-#define IDM_SETTING_REPEAT 0x3112
-#define IDM_SETTING_SINGLE 0x3113
-#define IDM_SETTING_RANDOM 0x3114
+#define IDM_SETTING_REPEAT_ONCE 0x3112
+#define IDM_SETTING_ONCE 0x3113
+#define IDM_SETTING_SHUFFLE 0x3114
 
 #define IDM_OPERATE_PLAY IDB_PLAY
 #define IDM_OPERATE_STOP IDB_STOP
@@ -260,11 +260,11 @@ void MainWindow::initMenu() {
     ::AppendMenuW(hSettingMenu, MF_SEPARATOR, 0, nullptr);
     ::AppendMenuW(hSettingMenu, MF_POPUP, reinterpret_cast<UINT_PTR>(hPlayModeMenu), L"播放模式(&M)");
 
-    ::AppendMenuW(hPlayModeMenu, MF_STRING, IDM_SETTING_LOOP, L"列表循环");
+    ::AppendMenuW(hPlayModeMenu, MF_STRING, IDM_SETTING_ALL_REPEAT, L"列表循环");
     ::AppendMenuW(hPlayModeMenu, MF_STRING, IDM_SETTING_ORDER, L"顺序播放");
-    ::AppendMenuW(hPlayModeMenu, MF_STRING, IDM_SETTING_REPEAT, L"单曲循环");
-    ::AppendMenuW(hPlayModeMenu, MF_STRING, IDM_SETTING_SINGLE, L"单曲播放");
-    ::AppendMenuW(hPlayModeMenu, MF_STRING, IDM_SETTING_RANDOM, L"随机播放");
+    ::AppendMenuW(hPlayModeMenu, MF_STRING, IDM_SETTING_REPEAT_ONCE, L"单曲循环");
+    ::AppendMenuW(hPlayModeMenu, MF_STRING, IDM_SETTING_ONCE, L"单曲播放");
+    ::AppendMenuW(hPlayModeMenu, MF_STRING, IDM_SETTING_SHUFFLE, L"随机播放");
 
     ::AppendMenuW(hOperateMenu, MF_STRING, IDM_OPERATE_PLAY, L"播放/暂停(&P)");
     ::AppendMenuW(hOperateMenu, MF_STRING, IDM_OPERATE_STOP, L"停止(&T)");
@@ -312,6 +312,10 @@ void MainWindow::onInitMenuPopup(HMENU hMenu) {
         ::CheckMenuItem(hMenu, IDM_SETTING_DESKTOP, ::IsWindowVisible(_desktopWindow.getHWnd()) ? MF_CHECKED : MF_UNCHECKED);
         ::CheckMenuItem(hMenu, IDM_SETTING_LOCK, _desktopWindow.isLock() ? MF_CHECKED : MF_UNCHECKED);
     }
+    else if (hMenu == _hPlayModeMenu) {
+        ::CheckMenuRadioItem(hMenu, IDM_SETTING_ALL_REPEAT, IDM_SETTING_SHUFFLE,
+            IDM_SETTING_ALL_REPEAT + static_cast<int>(_playMode), MF_BYCOMMAND);
+    }
 }
 
 void MainWindow::onCommand(WPARAM wParam) {
@@ -332,19 +336,24 @@ void MainWindow::onCommand(WPARAM wParam) {
         ::ShowWindow(_desktopWindow.getHWnd(), ::IsWindowVisible(_desktopWindow.getHWnd()) ? SW_HIDE : SW_SHOW);
         break;
 
-    case IDM_SETTING_LOOP:
+    case IDM_SETTING_ALL_REPEAT:
+        _playMode = PLAY_MODE::ALL_REPEAT;
         break;
 
     case IDM_SETTING_ORDER:
+        _playMode = PLAY_MODE::ORDER;
         break;
 
-    case IDM_SETTING_REPEAT:
+    case IDM_SETTING_REPEAT_ONCE:
+        _playMode = PLAY_MODE::REPEAT_ONCE;
         break;
 
-    case IDM_SETTING_SINGLE:
+    case IDM_SETTING_ONCE:
+        _playMode = PLAY_MODE::ONCE;
         break;
 
-    case IDM_SETTING_RANDOM:
+    case IDM_SETTING_SHUFFLE:
+        _playMode = PLAY_MODE::SHUFFLE;
         break;
 
     case IDM_SETTING_LOCK:
@@ -433,9 +442,11 @@ void MainWindow::onCommand(WPARAM wParam) {
         break;
 
     case IDB_PREV:
+        playSpecifiedFile(_listView.getPrevFile(_playMode));
         break;
 
     case IDB_NEXT:
+        playSpecifiedFile(_listView.getNextFile(_playMode, true));
         break;
 
     case IDB_STOP:
@@ -493,7 +504,7 @@ bool MainWindow::onPlay() {
             return resume();
         }
         else {
-            return playSpecifiedFile(_listView.getSelectedFile());
+            return playSpecifiedFile(_listView.getCurrentFile());
         }
     }
 }
@@ -558,6 +569,10 @@ bool MainWindow::playSpecifiedFile(LPCWSTR fileName) {
             break;
         }
         _opened = false;
+        if (fileName == nullptr) {
+            break;
+        }
+
         if (!_player.openFile(_hSelf, fileName)) {
             break;
         }
@@ -642,7 +657,15 @@ bool MainWindow::onTimer() {
     }
 
     if (_audioLength <= curPos) {  // 已播放完
-        stop();
+        if (_playMode != PLAY_MODE::REPEAT_ONCE) {
+            stop();
+            if (_playMode != PLAY_MODE::ONCE) {
+                playSpecifiedFile(_listView.getNextFile(_playMode, false));
+            }
+        }
+        else {
+            _player.seekTo(_hSelf, 0, true);
+        }
         return false;
     }
 

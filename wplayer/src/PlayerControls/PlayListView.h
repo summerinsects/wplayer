@@ -5,13 +5,23 @@
 #include <vector>
 #include <string>
 
+enum class PLAY_MODE {
+    ALL_REPEAT = 0,
+    ORDER,
+    REPEAT_ONCE,
+    ONCE,
+    SHUFFLE
+};
+
 class PlayListView : public Window {
 public:
     bool init(HWND hPerent, const POINT &pos, const SIZE &size);
 
     void onNotify(WPARAM wParam, LPARAM lParam);
     bool insertListItem(LPCWSTR fileName);
-    LPCWSTR getSelectedFile() const;
+    LPCWSTR getCurrentFile();
+    LPCWSTR getNextFile(PLAY_MODE mode, bool manual);
+    LPCWSTR getPrevFile(PLAY_MODE mode);
 
 protected:
     void initColumns();
@@ -21,6 +31,7 @@ protected:
 
     std::vector<std::wstring> _files;
     int _selectedIdx = -1;
+    int _playingIdx = -1;
 };
 
 #endif
