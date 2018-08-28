@@ -575,21 +575,22 @@ static void setPixelDataForChar(DWORD *pixelData, const TEXTMETRICW &tm, const G
     const size_t rowSize = buff.size() / gm.gmBlackBoxY;
 
     for (UINT y = 0; y < gm.gmBlackBoxY; ++y) {
-        LONG yy = yPos + y + (tm.tmAscent - gm.gmptGlyphOrigin.y);
+        const LONG chy = y + (tm.tmAscent - gm.gmptGlyphOrigin.y);
+        const LONG yy = maxHeight - (yPos + chy);
         if (yy < 0) {
-            continue;
+            break;
         }
         if (yy >= maxHeight) {
-            break;
+            continue;
         }
 
         for (UINT x = 0; x < gm.gmBlackBoxX; ++x) {
-            BYTE gray = buff[rowSize * y + x];
+            const BYTE gray = buff[rowSize * y + x];
             if (gray == 0) {
                 continue;
             }
 
-            LONG xx = xPos + x + gm.gmptGlyphOrigin.x;
+            const LONG xx = xPos + x + gm.gmptGlyphOrigin.x;
             if (xx < 0) {
                 continue;
             }
@@ -597,15 +598,15 @@ static void setPixelDataForChar(DWORD *pixelData, const TEXTMETRICW &tm, const G
                 break;
             }
 
-            DWORD bgColor = pixelData[(maxHeight - yy) * maxWidth + xx];
+            DWORD bgColor = pixelData[yy * maxWidth + xx];
             DWORD color = (gray == 0x40) ? 0xFF000000U : (gray * 4) << 24;
 
-            if (yy + 1 < maxHeight && xx + 1 < maxWidth) {
-                pixelData[(maxHeight - yy - 1) * maxWidth + xx + 1] = color;
+            if (yy > 1 && xx + 1 < maxWidth) {
+                pixelData[(yy - 1) * maxWidth + xx + 1] = color;
             }
 
             bgColor = ColorBlendb(bgColor, color);
-            color = (xx < demarcation) ? colorPast[yy - yPos] : colorFuture[yy - yPos];
+            color = (xx < demarcation) ? colorPast[chy] : colorFuture[chy];
             if (gray == 0x40) {
                 color |= 0xFF000000U;
             }
@@ -613,7 +614,7 @@ static void setPixelDataForChar(DWORD *pixelData, const TEXTMETRICW &tm, const G
                 color |= (gray * 4) << 24;
             }
 
-            pixelData[(maxHeight - yy) * maxWidth + xx] = ColorBlendb(bgColor, color);
+            pixelData[yy * maxWidth + xx] = ColorBlendb(bgColor, color);
         }
     }
 }
