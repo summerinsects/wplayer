@@ -370,39 +370,51 @@ void MainWindow::onCommand(WPARAM wParam) {
         break;
 
     case IDM_OPERATE_AHEAD_100MS:
+        _desktopWindow.setLyricsOffset(100);
         break;
 
     case IDM_OPERATE_AHEAD_200MS:
+        _desktopWindow.setLyricsOffset(200);
         break;
 
     case IDM_OPERATE_AHEAD_500MS:
+        _desktopWindow.setLyricsOffset(500);
         break;
 
     case IDM_OPERATE_AHEAD_1S:
+        _desktopWindow.setLyricsOffset(1000);
         break;
 
     case IDM_OPERATE_AHEAD_2S:
+        _desktopWindow.setLyricsOffset(2000);
         break;
 
     case IDM_OPERATE_AHEAD_5S:
+        _desktopWindow.setLyricsOffset(5000);
         break;
 
     case IDM_OPERATE_DELAY_100MS:
+        _desktopWindow.setLyricsOffset(-100);
         break;
 
     case IDM_OPERATE_DELAY_200MS:
+        _desktopWindow.setLyricsOffset(-200);
         break;
 
     case IDM_OPERATE_DELAY_500MS:
+        _desktopWindow.setLyricsOffset(-500);
         break;
 
     case IDM_OPERATE_DELAY_1S:
+        _desktopWindow.setLyricsOffset(-1000);
         break;
 
     case IDM_OPERATE_DELAY_2S:
+        _desktopWindow.setLyricsOffset(-2000);
         break;
 
     case IDM_OPERATE_DELAY_5S:
+        _desktopWindow.setLyricsOffset(-5000);
         break;
 
     case IDM_OPERATE_DELETE:

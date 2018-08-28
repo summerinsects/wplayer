@@ -356,6 +356,7 @@ bool DesktopWindow::openMatchedLyrics(LPCWSTR fileName) {
     }
 
     forceRefresh();
+    _timeOffset = 0;
 
     return true;
 }
@@ -381,9 +382,11 @@ void DesktopWindow::refreshLyrics(int time) {
         return;
     }
 
+    time += _timeOffset + _lyrics.offset;
+
     if ((_align & LYRICS_SINGLE_LINE) == 0) {
         DrawInfo info1, info2;
-        calculateSentenceIndex2(time + _lyrics.offset, &info1, &info2);
+        calculateSentenceIndex2(time, &info1, &info2);
         if (info1.sentence != nullptr || info2.sentence != nullptr) {
             _displayState = DISPLAY_STATE::LRYICS;
             // 重复判断
@@ -396,7 +399,7 @@ void DesktopWindow::refreshLyrics(int time) {
     }
     else {
         DrawInfo info;
-        calculateSentenceIndex1(time + _lyrics.offset, &info);
+        calculateSentenceIndex1(time, &info);
         if (info.sentence != nullptr) {
             _displayState = DISPLAY_STATE::LRYICS;
             // 重复判断

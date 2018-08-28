@@ -63,6 +63,7 @@ public:
     bool isLock() const;
 
     bool openMatchedLyrics(LPCWSTR fileName);
+    void setLyricsOffset(int millisecond) {  _timeOffset = millisecond; }
     void refreshLyrics(int time);
     void forceRefresh();
 
@@ -88,6 +89,7 @@ private:
     unsigned _align = 0;
     bool _singleLine = false;
     WCHAR _countdownChar = 0;
+    int _timeOffset = 0;
 
     enum class DISPLAY_STATE {
         NONE = 0, EMPTY, LRYICS, TITLE, MADE_BY
