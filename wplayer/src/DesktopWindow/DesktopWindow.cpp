@@ -465,7 +465,6 @@ void DesktopWindow::calculateSentenceIndex1(int time, DrawInfo *info) {
     // 这一句尚未开始或者全部结束
     info->sentence = nullptr;
     if (i > 0) {  // 有上一句
-        const LyricsSentence &sentence = sentences[i];
         const LyricsSentence &prev = sentences[i - 1];
         if (time < prev.start_time + prev.duration + 3000) {  // 上一句推迟3秒
             info->sentence = &prev;  // 保存上一句
@@ -546,7 +545,6 @@ void DesktopWindow::calculateSentenceIndex2(int time, DrawInfo *info1, DrawInfo 
     // 这一句尚未开始或者全部结束
     info1->sentence = nullptr;
     if (i > 0) {  // 有上一句
-        const LyricsSentence &sentence = sentences[i];
         const LyricsSentence &prev = sentences[i - 1];
         if (time < prev.start_time + prev.duration + 3000) {  // 上一句推迟3秒
             info2->sentence = &prev;  // 保存上一句
