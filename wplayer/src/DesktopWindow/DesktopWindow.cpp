@@ -264,6 +264,11 @@ static std::wstring UTF8ToWChar(const std::string &utf8) {
 }
 
 bool DesktopWindow::openMatchedLyrics(LPCWSTR fileName) {
+    _lyrics.sentences.clear();
+    _lyrics.tags.clear();
+    _lyrics.total_time = 0;
+    _lyrics.offset = 0;
+
     LPCWSTR dot = wcsrchr(fileName, L'.');
     if (dot == nullptr) {
         return false;
@@ -292,8 +297,6 @@ bool DesktopWindow::openMatchedLyrics(LPCWSTR fileName) {
     }
 
     // 转换
-    _lyrics.sentences.clear();
-    _lyrics.tags.clear();
     _lyrics.total_time = lyrics.total_time;
     _lyrics.offset = lyrics.offset;
 
@@ -366,6 +369,14 @@ void DesktopWindow::forceRefresh() {
 
 void DesktopWindow::refreshLyrics(int time) {
     if (!::IsWindowVisible(_hSelf)) {
+        return;
+    }
+
+    if (_lyrics.sentences.empty()) {
+        if (_displayState != DISPLAY_STATE::EMPTY) {
+            clearDraw();
+            _displayState = DISPLAY_STATE::EMPTY;
+        }
         return;
     }
 
@@ -1105,6 +1116,55 @@ void DesktopWindow::drawInfo(const std::wstring &text) {
 
     ::SelectObject(hdc, hOldFont1);
     ::DeleteObject(hFont1);
+
+    ::ReleaseDC(_hSelf, hdc);
+}
+
+void DesktopWindow::clearDraw() {
+    RECT clientRect;
+    ::GetClientRect(_hSelf, &clientRect);
+
+    const LONG maxWidth = clientRect.right - clientRect.left;
+    const LONG maxHeight = clientRect.bottom - clientRect.top;
+
+    HDC hdc = ::GetDC(_hSelf);
+    HDC hdcMem = ::CreateCompatibleDC(hdc);
+
+    BITMAPINFO bi = { 0 };
+    bi.bmiHeader.biSize = sizeof(bi.bmiHeader);
+    bi.bmiHeader.biWidth = maxWidth;
+    bi.bmiHeader.biHeight = maxHeight;
+    bi.bmiHeader.biPlanes = 1;
+    bi.bmiHeader.biBitCount = 32;
+    bi.bmiHeader.biCompression = BI_RGB;
+    bi.bmiHeader.biSizeImage = maxWidth * maxHeight * 4;
+
+    DWORD *pixelData;
+    HBITMAP hBitmap = ::CreateDIBSection(NULL, &bi, DIB_RGB_COLORS, (void **)&pixelData, NULL, 0);
+    HBITMAP hOldBitmap = reinterpret_cast<HBITMAP>(::SelectObject(hdcMem, hBitmap));
+
+    static const BLENDFUNCTION blend = { AC_SRC_OVER, 0, 255, AC_SRC_ALPHA };
+    const SIZE clientSize = { maxWidth, maxHeight };
+    const POINT pointSrc = { 0, 0 };
+    UPDATELAYEREDWINDOWINFO ulwInfo;
+    ulwInfo.cbSize = sizeof(ulwInfo);
+    ulwInfo.hdcDst = hdc;
+    ulwInfo.pptDst = nullptr;
+    ulwInfo.psize = &clientSize;
+    ulwInfo.hdcSrc = hdcMem;
+    ulwInfo.pptSrc = &pointSrc;
+    ulwInfo.crKey = 0;
+    ulwInfo.pblend = &blend;
+    ulwInfo.dwFlags = ULW_ALPHA;
+
+    RECT dirtyRect = { 0, 0, clientSize.cx, clientSize.cy };
+    ulwInfo.prcDirty = &dirtyRect;
+    ::UpdateLayeredWindowIndirect(_hSelf, &ulwInfo);
+
+    ::SelectObject(hdcMem, hOldBitmap);
+    ::DeleteObject(hBitmap);
+
+    ::DeleteDC(hdcMem);
 
     ::ReleaseDC(_hSelf, hdc);
 }

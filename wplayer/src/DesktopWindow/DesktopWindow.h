@@ -90,7 +90,7 @@ private:
     WCHAR _countdownChar = 0;
 
     enum class DISPLAY_STATE {
-        NONE = 0, LRYICS, TITLE, MADE_BY
+        NONE = 0, EMPTY, LRYICS, TITLE, MADE_BY
     };
     DISPLAY_STATE _displayState = DISPLAY_STATE::NONE;
 
@@ -101,6 +101,7 @@ private:
     void calculateSentenceIndex2(int time, DrawInfo *info1, DrawInfo *info2);
     void drawSentence(const DrawInfo *info1, const DrawInfo *info2);
     void drawInfo(const std::wstring &text);
+    void clearDraw();
 };
 
 #endif
