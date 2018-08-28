@@ -641,7 +641,7 @@ static std::vector<DWORD> gradientColor(const std::vector<COLORREF> &colors, LON
     std::vector<DWORD> ret(height, colors[0]);
 
     if (count > 1) {
-        LONG split = height / (count - 1);
+        LONG split = height / (static_cast<LONG>(count) - 1);
         COLORREF color0 = colors[0];
         int r0 = GetRValue(color0);
         int g0 = GetGValue(color0);
@@ -801,10 +801,10 @@ static RECT setPixelDataForSentence(DWORD *pixelData, LONG maxWidth, LONG maxHei
     GLYPHMETRICS gm;
     const MAT2 mat2 = { {0, 1}, {0, 0}, {0, 0}, {0, 1} };
 
-    for (size_t i = 0, cnt = details.size(); i < cnt; ++i) {
+    for (size_t i = 0, detailCnt = details.size(); i < detailCnt; ++i) {
         const LyricsWordDetail &lwd = details[i];
         LONG offset = xPos;
-        for (size_t k = 0, cnt = lwd.text_indices.size(); k < cnt; ++k) {
+        for (size_t k = 0, indiexCnt = lwd.text_indices.size(); k < indiexCnt; ++k) {
             WORD idx = lwd.text_indices.at(k);
             memset(&gm, 0, sizeof(gm));
             DWORD buffSize = ::GetGlyphOutlineW(hdcText, idx, GGO_GLYPH_INDEX | GGO_GRAY8_BITMAP, &gm, 0, nullptr, &mat2);
@@ -930,6 +930,7 @@ void DesktopWindow::drawSentence(const DrawInfo *info1, const DrawInfo *info2) {
     static const BLENDFUNCTION blend = { AC_SRC_OVER, 0, 255, AC_SRC_ALPHA };
     const SIZE clientSize = { maxWidth, maxHeight };
     const POINT pointSrc = { 0, 0 };
+    RECT dirtyRect = { 0, 0, 0, 0 };
     UPDATELAYEREDWINDOWINFO ulwInfo;
     ulwInfo.cbSize = sizeof(ulwInfo);
     ulwInfo.hdcDst = hdc;
@@ -939,6 +940,7 @@ void DesktopWindow::drawSentence(const DrawInfo *info1, const DrawInfo *info2) {
     ulwInfo.pptSrc = &pointSrc;
     ulwInfo.crKey = 0;
     ulwInfo.pblend = &blend;
+    ulwInfo.prcDirty = &dirtyRect;
     ulwInfo.dwFlags = ULW_ALPHA;
 
     // 相同就不画了
@@ -947,8 +949,10 @@ void DesktopWindow::drawSentence(const DrawInfo *info1, const DrawInfo *info2) {
         RECT ret = setPixelDataForSentence(pixelData, maxWidth, maxHeight, _align, *info1, hdc, hdcMem, tm1, tm2, colorPast1, colorFuture1, colorPast2, colorFuture2);
         memcpy(&_prevDrawInfos.first, info1, sizeof(*info1));
 
-        RECT dirtyRect = { 0, ret.top, clientSize.cx, ret.top + tm1.tmHeight + tm2.tmHeight };
-        ulwInfo.prcDirty = &dirtyRect;
+        dirtyRect.left = 0;
+        dirtyRect.top = ret.top;
+        dirtyRect.right = clientSize.cx;
+        dirtyRect.bottom = ret.top + tm1.tmHeight + tm2.tmHeight;
         ::UpdateLayeredWindowIndirect(_hSelf, &ulwInfo);
 
         if (!(_align & LYRICS_SINGLE_LINE) && info1->sentence->need_countdown && info1->word <= 0) {
@@ -956,14 +960,17 @@ void DesktopWindow::drawSentence(const DrawInfo *info1, const DrawInfo *info2) {
             countdown = true;
             setPixelDataForCountingdown(pixelData, maxWidth, maxHeight, ret.left, hdc, _countdownChar, cnt, tm1, colorPast1);
 
-            RECT dirtyRect = { 0, 0, clientSize.cx, tm1.tmHeight + tm2.tmHeight };
-            ulwInfo.prcDirty = &dirtyRect;
+            dirtyRect.left = 0;
+            dirtyRect.top = 0;
+            dirtyRect.right = clientSize.cx;
+            dirtyRect.bottom = tm1.tmHeight + tm2.tmHeight;
             ::UpdateLayeredWindowIndirect(_hSelf, &ulwInfo);
         }
     }
 
     // 相同就不画了
-    if (!countdown && info2 != nullptr && memcmp(&_prevDrawInfos.first, info2, sizeof(*info2)) != 0 && memcmp(&_prevDrawInfos.second, info2, sizeof(*info2)) != 0) {
+    if (!countdown && info2 != nullptr
+        && memcmp(&_prevDrawInfos.first, info2, sizeof(*info2)) != 0 && memcmp(&_prevDrawInfos.second, info2, sizeof(*info2)) != 0) {
         RECT ret = { 0 };
         if (info2->sentence != nullptr) {
             ret = setPixelDataForSentence(pixelData, maxWidth, maxHeight, _align, *info2, hdc, hdcMem, tm1, tm2, colorPast1, colorFuture1, colorPast2, colorFuture2);
@@ -978,8 +985,10 @@ void DesktopWindow::drawSentence(const DrawInfo *info1, const DrawInfo *info2) {
         }
         memcpy(&_prevDrawInfos.second, info2, sizeof(*info2));
 
-        RECT dirtyRect = { 0, ret.top, clientSize.cx, ret.top + tm1.tmHeight + tm2.tmHeight };
-        ulwInfo.prcDirty = &dirtyRect;
+        dirtyRect.left = 0;
+        dirtyRect.top = ret.top;
+        dirtyRect.right = clientSize.cx;
+        dirtyRect.bottom = ret.top + tm1.tmHeight + tm2.tmHeight;
         ::UpdateLayeredWindowIndirect(_hSelf, &ulwInfo);
     }
 
