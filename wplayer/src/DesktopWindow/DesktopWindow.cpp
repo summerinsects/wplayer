@@ -5,10 +5,22 @@
 #undef max
 #undef min
 
+#ifdef _WIN64
+
+#ifdef _DEBUG
+#pragma comment(lib, "../x64/Debug/lyrics.lib")
+#else
+#pragma comment(lib, "../x64/Release/lyrics.lib")
+#endif
+
+#else
+
 #ifdef _DEBUG
 #pragma comment(lib, "../Debug/lyrics.lib")
 #else
 #pragma comment(lib, "../Release/lyrics.lib")
+#endif
+
 #endif
 
 bool DesktopWindow::init() {
