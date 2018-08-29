@@ -63,7 +63,7 @@ public:
     bool isLock() const;
 
     bool openMatchedLyrics(LPCWSTR fileName);
-    void setLyricsOffset(int millisecond) {  _timeOffset = millisecond; }
+    void setLyricsOffset(int millisecond) {  _timeOffset += millisecond; }
     void refreshLyrics(int time);
     void forceRefresh(bool clean);
 
