@@ -65,7 +65,7 @@ public:
     bool openMatchedLyrics(LPCWSTR fileName);
     void setLyricsOffset(int millisecond) {  _timeOffset = millisecond; }
     void refreshLyrics(int time);
-    void forceRefresh();
+    void forceRefresh(bool clean);
 
 private:
     HWND _hWndTool = NULL;

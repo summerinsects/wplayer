@@ -367,18 +367,20 @@ bool DesktopWindow::openMatchedLyrics(LPCWSTR fileName) {
         _title.assign(p + 1, dot);
     }
 
-    forceRefresh();
+    forceRefresh(true);
     _timeOffset = 0;
 
     return true;
 }
 
-void DesktopWindow::forceRefresh() {
+void DesktopWindow::forceRefresh(bool clean) {
     // 清除上次绘制标记
     _prevDrawInfos.first.sentence = nullptr;
     _prevDrawInfos.second.sentence = nullptr;
     _displayState = DISPLAY_STATE::NONE;
-    clearDraw();
+    if (clean) {
+        clearDraw();
+    }
 }
 
 void DesktopWindow::refreshLyrics(int time) {
