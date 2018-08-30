@@ -91,16 +91,17 @@ namespace DrawSupport {
                 int g1 = GetGValue(color1);
                 int b1 = GetBValue(color1);
 
-                int ro = (r1 - r0) / split;
-                int go = (g1 - g0) / split;
-                int bo = (b1 - b0) / split;
+                int ro = r1 - r0;
+                int go = g1 - g0;
+                int bo = b1 - b0;
 
                 for (LONG k = 0; k < split; ++k) {
-                    r0 += ro;
-                    g0 += go;
-                    b0 += bo;
-                    ret[(i - 1) * split + k] = RGB(r0, g0, b0);
+                    ret[(i - 1) * split + k] = RGB(r0 + ro * k / split, g0 + go * k / split, b0 + bo * k / split);
                 }
+
+                r0 = r1;
+                g0 = g1;
+                b0 = b1;
             }
         }
 
