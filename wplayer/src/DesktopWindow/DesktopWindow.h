@@ -5,6 +5,7 @@
 #include <vector>
 #include <string>
 #include <unordered_map>
+#include "../DrawSupport/DrawSupport.h"
 
 struct LyricsWord {
     std::wstring text;
@@ -47,13 +48,6 @@ struct LyricsWordDetail {
     LONG max_width;
 };
 
-#define LYRICS_SEPARATE 0x0
-#define LYRICS_LEFT 0x1
-#define LYRICS_RIGHT 0x2
-#define LYRICS_CENTER 0x3
-
-#define LYRICS_DOUBLE_LINES 0x00
-#define LYRICS_SINGLE_LINE 0x10
 
 class DesktopWindow : public Window {
 public:
@@ -87,7 +81,6 @@ private:
     std::vector<COLORREF> _colorPast;
     std::vector<COLORREF> _colorFuture;
     unsigned _align = 0;
-    bool _singleLine = false;
     WCHAR _countdownChar = 0;
     int _timeOffset = 0;
 

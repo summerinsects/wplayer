@@ -48,6 +48,9 @@
     <ClCompile Include="src\DesktopWindow\DesktopWindow.cpp">
       <Filter>src\DesktopWindow</Filter>
     </ClCompile>
+    <ClCompile Include="src\DrawSupport\DrawSupport.cpp">
+      <Filter>src\DrawSupport</Filter>
+    </ClCompile>
     <ClCompile Include="src\main.cpp">
       <Filter>src</Filter>
     </ClCompile>
@@ -73,6 +76,9 @@
     </ClInclude>
     <ClInclude Include="src\DesktopWindow\DesktopWindow.h">
       <Filter>src\DesktopWindow</Filter>
+    </ClInclude>
+    <ClInclude Include="src\DrawSupport\DrawSupport.h">
+      <Filter>src\DrawSupport</Filter>
     </ClInclude>
     <ClInclude Include="src\MainWindow\MainWindow.h">
       <Filter>src\MainWindow</Filter>
