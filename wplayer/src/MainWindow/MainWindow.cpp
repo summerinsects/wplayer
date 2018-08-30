@@ -2,6 +2,7 @@
 #include <commdlg.h>
 #include <CommCtrl.h>
 #include "../base/Common.h"
+#include "../LyricsSettingDialog/LyricsSettingDialog.h"
 
 #define APP_NAME L"wplayer"
 
@@ -360,9 +361,15 @@ void MainWindow::onCommand(WPARAM wParam) {
         _desktopWindow.toggleLock();
         break;
 
-    case IDM_SETTING_STYLE:
+    case IDM_SETTING_STYLE: {
+        LyricsSettingDialog lsd;
+        DrawSupport::DrawParam param = _desktopWindow.getDrawParam();
+        if (lsd.show(_hSelf, &param)) {
+            _desktopWindow.setDrawParam(std::move(param));
+            _desktopWindow.forceRefresh(true);
+        }
         break;
-
+    }
     case IDM_OPERATE_FORWARD:
         break;
 

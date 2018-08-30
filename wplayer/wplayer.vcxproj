@@ -72,7 +72,7 @@
   <PropertyGroup />
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
+      <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
@@ -88,7 +88,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
+      <WarningLevel>Level4</WarningLevel>
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -121,6 +121,7 @@
     <ClCompile Include="src\base\Window.cpp" />
     <ClCompile Include="src\DesktopWindow\DesktopWindow.cpp" />
     <ClCompile Include="src\DrawSupport\DrawSupport.cpp" />
+    <ClCompile Include="src\LyricsSettingDialog\LyricsSettingDialog.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\MainWindow\MainWindow.cpp" />
     <ClCompile Include="src\PlayerControls\PlayListView.cpp" />
@@ -132,6 +133,7 @@
     <ClInclude Include="src\base\Window.h" />
     <ClInclude Include="src\DesktopWindow\DesktopWindow.h" />
     <ClInclude Include="src\DrawSupport\DrawSupport.h" />
+    <ClInclude Include="src\LyricsSettingDialog\LyricsSettingDialog.h" />
     <ClInclude Include="src\MainWindow\MainWindow.h" />
     <ClInclude Include="src\PlayerControls\PlayListView.h" />
   </ItemGroup>
