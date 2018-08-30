@@ -25,6 +25,9 @@
     <Filter Include="src\DesktopWindow">
       <UniqueIdentifier>{b30fc059-6e00-4b52-888b-f89aa6196f7d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\DrawSupport">
+      <UniqueIdentifier>{0429cec4-67f5-4f3c-9661-64cac3bc84fb}</UniqueIdentifier>
+    </Filter>
     <Filter Include="src\MainWindow">
       <UniqueIdentifier>{8e3d9408-5d45-467a-9ace-d19f637704d0}</UniqueIdentifier>
     </Filter>
