@@ -61,6 +61,9 @@ public:
     void refreshLyrics(int time);
     void forceRefresh(bool clean);
 
+    const DrawSupport::DrawParam &getDrawParam() const { return _drawParam; }
+    void setDrawParam(DrawSupport::DrawParam dp) { std::swap(_drawParam, dp); }
+
 private:
     HWND _hWndTool = NULL;
 
@@ -77,11 +80,8 @@ private:
 
     std::pair<DrawInfo, DrawInfo> _prevDrawInfos;
 
-    LOGFONTW _logFont;
-    std::vector<COLORREF> _colorPast;
-    std::vector<COLORREF> _colorFuture;
-    unsigned _align = 0;
-    WCHAR _countdownChar = 0;
+    DrawSupport::DrawParam _drawParam;
+
     int _timeOffset = 0;
 
     enum class DISPLAY_STATE {

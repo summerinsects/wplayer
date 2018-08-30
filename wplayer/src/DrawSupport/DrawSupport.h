@@ -19,7 +19,7 @@ namespace DrawSupport {
         std::vector<COLORREF> colorPast;
         std::vector<COLORREF> colorFuture;
         unsigned align = 0;
-        bool singleLine = false;
+        WCHAR countdownChar = 0;
     };
 
     __forceinline DWORD convertRGBtoBGR(COLORREF c) {

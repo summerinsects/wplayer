@@ -72,25 +72,25 @@ bool DesktopWindow::init() {
     ::ShowWindow(_hSelf, SW_SHOW);
     ::ShowWindow(_hWndTool, SW_SHOW);
 
-    _logFont.lfHeight = 64;
-    _logFont.lfWidth = 0;
-    _logFont.lfEscapement = 0;
-    _logFont.lfOrientation = 0;
-    _logFont.lfWeight = FW_BOLD;
-    _logFont.lfItalic = FALSE;
-    _logFont.lfUnderline = FALSE;
-    _logFont.lfStrikeOut = FALSE;
-    _logFont.lfCharSet = DEFAULT_CHARSET;
-    _logFont.lfOutPrecision = OUT_DEFAULT_PRECIS;
-    _logFont.lfClipPrecision = CLIP_DEFAULT_PRECIS;
-    _logFont.lfQuality = DEFAULT_QUALITY;
-    _logFont.lfPitchAndFamily = FF_MODERN;
-    wcsncpy(_logFont.lfFaceName, L"微软雅黑", LF_FACESIZE);
+    _drawParam.logFont.lfHeight = 64;
+    _drawParam.logFont.lfWidth = 0;
+    _drawParam.logFont.lfEscapement = 0;
+    _drawParam.logFont.lfOrientation = 0;
+    _drawParam.logFont.lfWeight = FW_BOLD;
+    _drawParam.logFont.lfItalic = FALSE;
+    _drawParam.logFont.lfUnderline = FALSE;
+    _drawParam.logFont.lfStrikeOut = FALSE;
+    _drawParam.logFont.lfCharSet = DEFAULT_CHARSET;
+    _drawParam.logFont.lfOutPrecision = OUT_DEFAULT_PRECIS;
+    _drawParam.logFont.lfClipPrecision = CLIP_DEFAULT_PRECIS;
+    _drawParam.logFont.lfQuality = DEFAULT_QUALITY;
+    _drawParam.logFont.lfPitchAndFamily = FF_MODERN;
+    wcsncpy(_drawParam.logFont.lfFaceName, L"微软雅黑", LF_FACESIZE);
 
-    _colorPast.push_back(RGB(0x00, 0x80, 0xF0));
-    _colorFuture.push_back(RGB(0xF0, 0xF0, 0xF0));
+    _drawParam.colorPast.push_back(RGB(0x00, 0x80, 0xF0));
+    _drawParam.colorFuture.push_back(RGB(0xF0, 0xF0, 0xF0));
 
-    _countdownChar = L'●';
+    _drawParam.countdownChar = L'●';
 
     return (_hSelf != NULL && _hWndTool != NULL);
 }
@@ -398,7 +398,7 @@ void DesktopWindow::refreshLyrics(int time) {
 
     time += _timeOffset + _lyrics.offset;
 
-    if ((_align & LYRICS_SINGLE_LINE) == 0) {
+    if ((_drawParam.align & LYRICS_SINGLE_LINE) == 0) {
         DrawInfo info1, info2;
         calculateSentenceIndex2(time, &info1, &info2);
         if (info1.sentence != nullptr || info2.sentence != nullptr) {
@@ -804,7 +804,7 @@ void DesktopWindow::drawSentence(const DrawInfo *info1, const DrawInfo *info2) {
     HDC hdcMem = ::CreateCompatibleDC(hdc);
 
     LOGFONTW lf;
-    memcpy(&lf, &_logFont, sizeof(lf));
+    memcpy(&lf, &_drawParam.logFont, sizeof(lf));
 
     HFONT hFont1 = ::CreateFontIndirectW(&lf);
     HFONT hOldFont1 = reinterpret_cast<HFONT>(::SelectObject(hdc, hFont1));
@@ -832,10 +832,10 @@ void DesktopWindow::drawSentence(const DrawInfo *info1, const DrawInfo *info2) {
     HBITMAP hBitmap = ::CreateDIBSection(NULL, &bi, DIB_RGB_COLORS, (void **)&pixelData, NULL, 0);
     HBITMAP hOldBitmap = reinterpret_cast<HBITMAP>(::SelectObject(hdcMem, hBitmap));
 
-    std::vector<DWORD> colorPast1 = DrawSupport::gradientColor(_colorPast, tm1.tmHeight);
-    std::vector<DWORD> colorFuture1 = DrawSupport::gradientColor(_colorFuture, tm1.tmHeight);
-    std::vector<DWORD> colorPast2 = DrawSupport::gradientColor(_colorPast, tm2.tmHeight);
-    std::vector<DWORD> colorFuture2 = DrawSupport::gradientColor(_colorFuture, tm2.tmHeight);
+    std::vector<DWORD> colorPast1 = DrawSupport::gradientColor(_drawParam.colorPast, tm1.tmHeight);
+    std::vector<DWORD> colorFuture1 = DrawSupport::gradientColor(_drawParam.colorFuture, tm1.tmHeight);
+    std::vector<DWORD> colorPast2 = DrawSupport::gradientColor(_drawParam.colorPast, tm2.tmHeight);
+    std::vector<DWORD> colorFuture2 = DrawSupport::gradientColor(_drawParam.colorFuture, tm2.tmHeight);
 
     static const BLENDFUNCTION blend = { AC_SRC_OVER, 0, 255, AC_SRC_ALPHA };
     const SIZE clientSize = { maxWidth, maxHeight };
@@ -856,7 +856,7 @@ void DesktopWindow::drawSentence(const DrawInfo *info1, const DrawInfo *info2) {
     // 相同就不画了
     bool countdown = false;
     if (memcmp(&_prevDrawInfos.first, info1, sizeof(*info1)) != 0 && memcmp(&_prevDrawInfos.second, info1, sizeof(*info1)) != 0) {
-        RECT ret = setPixelDataForSentence(pixelData, maxWidth, maxHeight, _align, *info1, hdc, hdcMem, tm1, tm2, colorPast1, colorFuture1, colorPast2, colorFuture2);
+        RECT ret = setPixelDataForSentence(pixelData, maxWidth, maxHeight, _drawParam.align, *info1, hdc, hdcMem, tm1, tm2, colorPast1, colorFuture1, colorPast2, colorFuture2);
         memcpy(&_prevDrawInfos.first, info1, sizeof(*info1));
 
         dirtyRect.left = 0;
@@ -865,10 +865,10 @@ void DesktopWindow::drawSentence(const DrawInfo *info1, const DrawInfo *info2) {
         dirtyRect.bottom = ret.top + tm1.tmHeight + tm2.tmHeight;
         ::UpdateLayeredWindowIndirect(_hSelf, &ulwInfo);
 
-        if (!(_align & LYRICS_SINGLE_LINE) && info1->sentence->need_countdown && info1->word <= 0) {
+        if (!(_drawParam.align & LYRICS_SINGLE_LINE) && info1->sentence->need_countdown && info1->word <= 0) {
             int cnt = std::min(-info1->word, 5);
             countdown = true;
-            setPixelDataForCountingdown(pixelData, maxWidth, maxHeight, ret.left, hdc, _countdownChar, cnt, tm1, colorPast1);
+            setPixelDataForCountingdown(pixelData, maxWidth, maxHeight, ret.left, hdc, _drawParam.countdownChar, cnt, tm1, colorPast1);
 
             dirtyRect.left = 0;
             dirtyRect.top = 0;
@@ -883,10 +883,10 @@ void DesktopWindow::drawSentence(const DrawInfo *info1, const DrawInfo *info2) {
         && memcmp(&_prevDrawInfos.first, info2, sizeof(*info2)) != 0 && memcmp(&_prevDrawInfos.second, info2, sizeof(*info2)) != 0) {
         RECT ret = { 0 };
         if (info2->sentence != nullptr) {
-            ret = setPixelDataForSentence(pixelData, maxWidth, maxHeight, _align, *info2, hdc, hdcMem, tm1, tm2, colorPast1, colorFuture1, colorPast2, colorFuture2);
+            ret = setPixelDataForSentence(pixelData, maxWidth, maxHeight, _drawParam.align, *info2, hdc, hdcMem, tm1, tm2, colorPast1, colorFuture1, colorPast2, colorFuture2);
         }
         else {
-            if ((_align & LYRICS_SINGLE_LINE) || info1->sentence->is_top) {
+            if ((_drawParam.align & LYRICS_SINGLE_LINE) || info1->sentence->is_top) {
                 ret.top = maxHeight - tm1.tmHeight - tm2.tmHeight;
             }
             else {
@@ -926,7 +926,7 @@ void DesktopWindow::drawInfo(const std::wstring &text) {
     HDC hdc = ::GetDC(_hSelf);
     HDC hdcMem = ::CreateCompatibleDC(hdc);
 
-    HFONT hFont1 = ::CreateFontIndirectW(&_logFont);
+    HFONT hFont1 = ::CreateFontIndirectW(&_drawParam.logFont);
     HFONT hOldFont1 = reinterpret_cast<HFONT>(::SelectObject(hdc, hFont1));
 
     TEXTMETRICW tm1;
@@ -963,14 +963,14 @@ void DesktopWindow::drawInfo(const std::wstring &text) {
             break;
         }
 
-        std::vector<DWORD> colorPast1 = DrawSupport::gradientColor(_colorPast, tm1.tmHeight);
+        std::vector<DWORD> colorPast1 = DrawSupport::gradientColor(_drawParam.colorPast, tm1.tmHeight);
 
         GLYPHMETRICS gm;
         const MAT2 mat2 = { {0, 1}, {0, 0}, {0, 0}, {0, 1} };
 
         std::vector<BYTE> buff;
 
-        const LONG yPos = (_align & LYRICS_SINGLE_LINE) == LYRICS_SINGLE_LINE ? maxHeight - tm1.tmHeight : 0;
+        const LONG yPos = (_drawParam.align & LYRICS_SINGLE_LINE) == LYRICS_SINGLE_LINE ? maxHeight - tm1.tmHeight : 0;
         LONG xPos = (maxWidth - textSize.cx) / 2;
         if (textSize.cx > maxWidth) {
             xPos = std::max(xPos, 0L);
