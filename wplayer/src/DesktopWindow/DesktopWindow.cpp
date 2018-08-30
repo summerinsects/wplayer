@@ -765,7 +765,7 @@ static RECT setPixelDataForSentence(DWORD *pixelData, LONG maxWidth, LONG maxHei
     return RECT{ xPos, yPosPhonetic, xPos + totalWidth, yPosPhonetic + tm1.tmHeight + tm2.tmHeight };
 }
 
-static void setPixelDataForCountingdown(DWORD *pixelData, LONG maxWidth, LONG maxHeight, LONG yPos, HDC hdc, WCHAR ch, int cnt, const TEXTMETRICW &tm1, const std::vector<DWORD> &color) {
+static void setPixelDataForCountingdown(DWORD *pixelData, LONG maxWidth, LONG maxHeight, LONG xPos, HDC hdc, WCHAR ch, int cnt, const TEXTMETRICW &tm1, const std::vector<DWORD> &color) {
     std::vector<BYTE> buff;
 
     GLYPHMETRICS gm;
@@ -788,7 +788,7 @@ static void setPixelDataForCountingdown(DWORD *pixelData, LONG maxWidth, LONG ma
     unsigned int const rowSize = buffSize / gm.gmBlackBoxY;
     LONG totalWidth = 0;
     for (int i = 0; i < cnt; ++i) {
-        DrawSupport::setPixelDataForChar(pixelData, tm1, gm, buff, maxWidth, maxHeight, totalWidth, yPos, INT_MAX, color, color);
+        DrawSupport::setPixelDataForChar(pixelData, tm1, gm, buff, maxWidth, maxHeight, xPos + totalWidth, 0, INT_MAX, color, color);
         totalWidth += gm.gmCellIncX;
     }
 }
