@@ -110,6 +110,17 @@ LRESULT DesktopWindow::runLyricsProc(HWND hwnd, UINT message, WPARAM wParam, LPA
         ::ShowWindow(hwnd, SW_HIDE);
         return 0;
 
+    case WM_SIZE:
+        // lParam的HIWORD为新窗口大小
+        if ((_drawParam.align & LYRICS_SINGLE_LINE) == 0) {
+            _drawParam.logFont.lfHeight = HIWORD(lParam) / 3;
+        }
+        else {
+            _drawParam.logFont.lfHeight = HIWORD(lParam) * 2 / 3;
+        }
+        forceRefresh(false);
+        return 0;
+
     case WM_DESTROY:
         return 0;
 
@@ -381,6 +392,23 @@ void DesktopWindow::forceRefresh(bool clean) {
     if (clean) {
         clearDraw();
     }
+}
+
+void DesktopWindow::setDrawParam(DrawSupport::DrawParam dp) {
+    std::swap(_drawParam, dp);
+
+    LONG height;
+    if ((_drawParam.align & LYRICS_SINGLE_LINE) == 0) {
+        height = labs(_drawParam.logFont.lfHeight * 3);
+    }
+    else {
+        height = labs(_drawParam.logFont.lfHeight + _drawParam.logFont.lfHeight / 2);
+    }
+
+    RECT rc;
+    ::GetWindowRect(_hSelf, &rc);
+    ::MoveWindow(_hSelf, rc.left, rc.bottom - height, rc.right - rc.left, height, FALSE);
+    ::MoveWindow(_hWndTool, rc.left, rc.bottom - height, rc.right - rc.left, height, FALSE);
 }
 
 void DesktopWindow::refreshLyrics(int time) {

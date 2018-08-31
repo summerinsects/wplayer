@@ -62,7 +62,7 @@ public:
     void forceRefresh(bool clean);
 
     const DrawSupport::DrawParam &getDrawParam() const { return _drawParam; }
-    void setDrawParam(DrawSupport::DrawParam dp) { std::swap(_drawParam, dp); }
+    void setDrawParam(DrawSupport::DrawParam dp);
 
 private:
     HWND _hWndTool = NULL;

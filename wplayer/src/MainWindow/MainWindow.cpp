@@ -366,7 +366,6 @@ void MainWindow::onCommand(WPARAM wParam) {
         DrawSupport::DrawParam param = _desktopWindow.getDrawParam();
         if (lsd.show(_hSelf, &param)) {
             _desktopWindow.setDrawParam(std::move(param));
-            _desktopWindow.forceRefresh(true);
         }
         break;
     }
