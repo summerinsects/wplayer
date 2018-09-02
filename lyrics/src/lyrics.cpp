@@ -150,7 +150,7 @@ static bool parse_sentence(const char *line, lyrics_sentence_t *sentence) {
             return false;
         }
 
-        while (*p == ' ') continue;  // 去掉前导空格
+        while (*p == ' ') ++p;  // 去掉前导空格
 
         // 到下一个<之前的全是字
         const char *q = strchr(p, '<');
