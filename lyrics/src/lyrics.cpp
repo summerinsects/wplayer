@@ -422,6 +422,10 @@ bool lyrics_decode(const std::vector<uint8_t> &data, lyrics_detail_t *lyrics) {
         return false;
     }
 
+#ifdef OUTPUT_TO_CONSOLE
+    puts(str.c_str());
+#endif
+
     std::stringstream ss(std::move(str));
 
     std::string line;
