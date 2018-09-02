@@ -20,6 +20,8 @@
 #define IDB_LYRICS_DOUBLE_LINES 0x7004
 #define IDB_LYRICS_SINGLE_LINE 0x7005
 
+static const WCHAR countdownChars[] = { L'●', L'★', L'◆', L'■', L'▲' };
+
 static bool chooseColor(HWND hwndOwner, LPCOLORREF lpColor);
 static bool chooseFont(HWND hwndOwner, LPLOGFONTW lpLogFont);
 static void insertColor(HWND hListView, int idx, COLORREF color);
@@ -192,6 +194,13 @@ INT_PTR LyricsSettingDialog::runProc(HWND hDialog, UINT message, WPARAM wParam, 
         default:
             break;
         }
+
+        if (HIWORD(wParam) == CBN_SELCHANGE) {
+            LRESULT ret = ::SendMessageW(reinterpret_cast<HWND>(lParam), CB_GETCURSEL, 0, 0);
+            if (ret != CB_ERR) {
+                _drawParam.countdownChar = countdownChars[ret];
+            }
+        }
         break;
 
     case WM_NOTIFY: {
@@ -338,7 +347,7 @@ void LyricsSettingDialog::init() {
     LONG width = rect.right - rect.left;
     LONG height = rect.bottom - rect.top;
 
-    HWND hStaticLabel, hButton, hListView;
+    HWND hStaticLabel, hButton, hListView, hComboBox;
 
     HFONT hFont = static_cast<HFONT>(::GetStockObject(DEFAULT_GUI_FONT));  // simsun
     //HFONT hFont = static_cast<HFONT>(::GetStockObject(DEVICE_DEFAULT_FONT));  // system
@@ -421,16 +430,18 @@ void LyricsSettingDialog::init() {
         120, 195, 70, 25, _hSelf, NULL, s_hInstance, nullptr);
     ::SendMessageW(hStaticLabel, WM_SETFONT, reinterpret_cast<WPARAM>(hFont), static_cast<LPARAM>(TRUE));
 
-    _hComboBox = ::CreateWindowExW(WS_EX_CLIENTEDGE, L"combobox", nullptr,
+    hComboBox = ::CreateWindowExW(WS_EX_CLIENTEDGE, L"combobox", nullptr,
         WS_CHILD | WS_VISIBLE | WS_TABSTOP | WS_CLIPSIBLINGS | CBS_DROPDOWN,
         195, 190, 45, 30, _hSelf, NULL, s_hInstance, nullptr);
-    ::SendMessageW(_hComboBox, WM_SETFONT, reinterpret_cast<WPARAM>(hFont), static_cast<LPARAM>(TRUE));
-    ::SendMessageW(_hComboBox, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"●"));
-    ::SendMessageW(_hComboBox, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"★"));
-    ::SendMessageW(_hComboBox, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"◆"));
-    ::SendMessageW(_hComboBox, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"■"));
-    ::SendMessageW(_hComboBox, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"▲"));
-    //::SendMessageW(_hComboBox, CB_SETCURSEL, (WPARAM)gs_iCountdown, 0);
+    ::SendMessageW(hComboBox, WM_SETFONT, reinterpret_cast<WPARAM>(hFont), static_cast<LPARAM>(TRUE));
+    for (size_t i = 0, cnt = _countof(countdownChars); i < cnt; ++i) {
+        WCHAR ch = countdownChars[i];
+        WCHAR str[2] = { ch };
+        ::SendMessageW(hComboBox, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(str));
+        if (ch == _drawParam.countdownChar) {
+            ::SendMessageW(hComboBox, CB_SETCURSEL, static_cast<WPARAM>(i), 0);
+        }
+    }
 
     hButton = ::CreateWindowExW(0, L"button", L"确定",
         WS_CHILD | WS_VISIBLE | WS_TABSTOP | WS_CLIPSIBLINGS | BS_DEFPUSHBUTTON,

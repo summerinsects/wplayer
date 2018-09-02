@@ -10,7 +10,6 @@ public:
 
 private:
     HWND _hStaticExample = NULL;
-    HWND _hComboBox = NULL;
 
     static INT_PTR CALLBACK DialogProc(HWND hDialog, UINT message, WPARAM wParam, LPARAM lParam);
     INT_PTR runProc(HWND hDialog, UINT message, WPARAM wParam, LPARAM lParam);
