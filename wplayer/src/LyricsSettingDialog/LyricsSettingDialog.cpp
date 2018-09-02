@@ -215,32 +215,6 @@ INT_PTR LyricsSettingDialog::runProc(HWND hDialog, UINT message, WPARAM wParam, 
             ::DestroyMenu(hPopupMenu);
             return TRUE;
         }
-        case NM_CUSTOMDRAW: {
-            LPNMLVCUSTOMDRAW cd = reinterpret_cast<LPNMLVCUSTOMDRAW>(lParam);
-            LRESULT result = CDRF_DODEFAULT;
-            switch (cd->nmcd.dwDrawStage) {
-            case  CDDS_PREPAINT:
-                result = CDRF_NOTIFYITEMDRAW;
-                break;
-            case CDDS_ITEMPREPAINT:
-                LVITEMW listItem;
-                listItem.mask = LVIF_PARAM;
-                listItem.iSubItem = 0;
-                listItem.iItem = static_cast<int>(cd->nmcd.dwItemSpec);
-                ::SendMessageW(hListView, LVM_GETITEM, 0, reinterpret_cast<LPARAM>(&listItem));
-
-                cd->clrTextBk = static_cast<COLORREF>(listItem.lParam);
-                result = CDRF_NOTIFYSUBITEMDRAW;
-                break;
-            case (CDDS_ITEMPREPAINT | CDDS_SUBITEM):
-                result = CDRF_DODEFAULT;
-                break;
-            default:
-                break;
-            }
-            ::SetWindowLongPtrW(hDialog, DWLP_MSGRESULT, static_cast<LONG_PTR>(result));
-            return TRUE;
-        }
         default:
             break;
         }
@@ -274,9 +248,27 @@ INT_PTR LyricsSettingDialog::runProc(HWND hDialog, UINT message, WPARAM wParam, 
 
     case WM_DRAWITEM: {
         LPDRAWITEMSTRUCT dis = reinterpret_cast<LPDRAWITEMSTRUCT>(lParam);
-        if (dis->CtlType == ODT_STATIC) {
+        switch (dis->CtlType) {
+        case ODT_STATIC:
             drawSample(dis->hDC, dis->rcItem);
             return TRUE;
+        case ODT_LISTVIEW: {
+            HWND hListView = dis->hwndItem;
+
+            LVITEMW listItem;
+            listItem.mask = LVIF_PARAM;
+            listItem.iSubItem = 0;
+            listItem.iItem = static_cast<int>(dis->itemID);
+            ::SendMessageW(hListView, LVM_GETITEM, 0, reinterpret_cast<LPARAM>(&listItem));
+
+            HBRUSH hBrush = ::CreateSolidBrush(static_cast<COLORREF>(listItem.lParam));
+            ::FillRect(dis->hDC, &dis->rcItem, hBrush);
+            ::DeleteObject(hBrush);
+
+            return TRUE;
+        }
+        default:
+            break;
         }
         break;
     }
@@ -316,7 +308,17 @@ static void insertColor(HWND hListView, int idx, COLORREF color) {
     ::SendMessageW(hListView, LVM_INSERTITEMW, 0, reinterpret_cast<LPARAM>(&listItem));
 }
 
-static void setColorsForListView(HWND hListView, const std::vector<COLORREF> &colors) {
+static void initColors(HWND hListView, const std::vector<COLORREF> &colors, LPCWSTR title) {
+    WCHAR text[128];
+    wcsncpy(text, title, _countof(text));
+
+    LVCOLUMNW listCol;
+    listCol.mask = LVCF_TEXT | LVCF_WIDTH;
+    listCol.cchTextMax = 128;
+    listCol.cx = 70;
+    listCol.pszText = text;
+    ::SendMessageW(hListView, LVM_INSERTCOLUMNW, static_cast<WPARAM>(0), reinterpret_cast<LPARAM>(&listCol));
+
     LVITEMW listItem;
 
     listItem.mask = LVIF_PARAM;
@@ -342,31 +344,21 @@ void LyricsSettingDialog::init() {
     //HFONT hFont = static_cast<HFONT>(::GetStockObject(DEVICE_DEFAULT_FONT));  // system
     //HFONT hFont = static_cast<HFONT>(::GetStockObject(SYSTEM_FONT));  // system
 
-    hStaticLabel = ::CreateWindowExW(0, L"static", L"已播放",
-        WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS,
-        50, 60, 50, 25, _hSelf, NULL, s_hInstance, nullptr);
-    ::SendMessageW(hStaticLabel, WM_SETFONT, reinterpret_cast<WPARAM>(hFont), static_cast<LPARAM>(TRUE));
-
-    hListView = ::CreateWindowExW(WS_EX_CLIENTEDGE/* | LVS_EX_BORDERSELECT*/, WC_LISTVIEWW, nullptr,
-        WS_VISIBLE | WS_CHILD | WS_CLIPSIBLINGS | LVS_NOCOLUMNHEADER | LVS_LIST/* | LVS_OWNERDRAWFIXED*/,
-        50, 85, 45, 80, _hSelf, NULL, s_hInstance, nullptr);
+    hListView = ::CreateWindowExW(WS_EX_CLIENTEDGE, WC_LISTVIEWW, nullptr,
+        WS_VISIBLE | WS_CHILD | WS_CLIPSIBLINGS | LVS_REPORT | LVS_OWNERDRAWFIXED | LVS_SINGLESEL,
+        50, 50, 75, 100, _hSelf, NULL, s_hInstance, nullptr);
     ::SetWindowLongPtrW(hListView, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(&_drawParam.colorPast));
-    setColorsForListView(hListView, _drawParam.colorPast);
+    initColors(hListView, _drawParam.colorPast, L"已播放");
 
-    hStaticLabel = ::CreateWindowExW(0, L"static", L"未播放",
-        WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS,
-        130, 60, 50, 25, _hSelf, NULL, s_hInstance, nullptr);
-    ::SendMessageW(hStaticLabel, WM_SETFONT, reinterpret_cast<WPARAM>(hFont), static_cast<LPARAM>(TRUE));
-
-    hListView = ::CreateWindowExW(WS_EX_CLIENTEDGE/* | LVS_EX_BORDERSELECT*/, WC_LISTVIEWW, nullptr,
-        WS_VISIBLE | WS_CHILD | WS_CLIPSIBLINGS | LVS_NOCOLUMNHEADER | LVS_LIST/* | LVS_OWNERDRAWFIXED*/,
-        130, 85, 45, 80, _hSelf, NULL, s_hInstance, nullptr);
+    hListView = ::CreateWindowExW(WS_EX_CLIENTEDGE, WC_LISTVIEWW, nullptr,
+        WS_VISIBLE | WS_CHILD | WS_CLIPSIBLINGS | LVS_REPORT | LVS_OWNERDRAWFIXED | LVS_SINGLESEL,
+        145, 50, 75, 100, _hSelf, NULL, s_hInstance, nullptr);
     ::SetWindowLongPtrW(hListView, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(&_drawParam.colorFuture));
-    setColorsForListView(hListView, _drawParam.colorFuture);
+    initColors(hListView, _drawParam.colorFuture, L"未播放");
 
     hStaticLabel = ::CreateWindowExW(0, L"button", L"颜色",
         WS_CHILD | WS_VISIBLE | BS_GROUPBOX,
-        30, 30, 210, 150, _hSelf, NULL, s_hInstance, nullptr);
+        30, 30, 210, 140, _hSelf, NULL, s_hInstance, nullptr);
     ::SendMessageW(hStaticLabel, WM_SETFONT, reinterpret_cast<WPARAM>(hFont), static_cast<LPARAM>(TRUE));
 
     hButton = ::CreateWindowExW(0, L"button", L"行数",
@@ -388,50 +380,50 @@ void LyricsSettingDialog::init() {
 
     hButton = ::CreateWindowExW(0, L"button", L"对齐方式",
         WS_CHILD | WS_VISIBLE | BS_GROUPBOX,
-        width - 210, 120, 180, 100, _hSelf, NULL, s_hInstance, nullptr);
+        width - 210, 120, 180, 90, _hSelf, NULL, s_hInstance, nullptr);
     ::SendMessageW(hButton, WM_SETFONT, reinterpret_cast<WPARAM>(hFont), static_cast<LPARAM>(TRUE));
 
     hButton = ::CreateWindowExW(0, L"button", L"分离",
         WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_AUTORADIOBUTTON | WS_GROUP,
-        width - 180, 150, 60, 25, _hSelf, reinterpret_cast<HMENU>(IDB_LYRICS_SEPARATE), s_hInstance, nullptr);
+        width - 180, 140, 60, 25, _hSelf, reinterpret_cast<HMENU>(IDB_LYRICS_SEPARATE), s_hInstance, nullptr);
     ::SendMessageW(hButton, WM_SETFONT, reinterpret_cast<WPARAM>(hFont), static_cast<LPARAM>(TRUE));
     if ((_drawParam.align & 0xF) == LYRICS_SEPARATE) ::SendMessageW(hButton, BM_SETCHECK, static_cast<WPARAM>(BST_CHECKED), 0);
 
     hButton = ::CreateWindowExW(0, L"button", L"左对齐",
         WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_AUTORADIOBUTTON,
-        width - 105, 150, 60, 25, _hSelf, reinterpret_cast<HMENU>(IDB_LYRICS_LEFT), s_hInstance, nullptr);
+        width - 105, 140, 60, 25, _hSelf, reinterpret_cast<HMENU>(IDB_LYRICS_LEFT), s_hInstance, nullptr);
     ::SendMessageW(hButton, WM_SETFONT, reinterpret_cast<WPARAM>(hFont), static_cast<LPARAM>(TRUE));
     if ((_drawParam.align & 0xF) == LYRICS_LEFT) ::SendMessageW(hButton, BM_SETCHECK, static_cast<WPARAM>(BST_CHECKED), 0);
 
     hButton = ::CreateWindowExW(0, L"button", L"居中",
         WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_AUTORADIOBUTTON,
-        width - 180, 180, 60, 25, _hSelf, reinterpret_cast<HMENU>(IDB_LYRICS_CENTER), s_hInstance, nullptr);
+        width - 180, 170, 60, 25, _hSelf, reinterpret_cast<HMENU>(IDB_LYRICS_CENTER), s_hInstance, nullptr);
     ::SendMessageW(hButton, WM_SETFONT, reinterpret_cast<WPARAM>(hFont), static_cast<LPARAM>(TRUE));
     if ((_drawParam.align & 0xF) == LYRICS_CENTER) ::SendMessageW(hButton, BM_SETCHECK, static_cast<WPARAM>(BST_CHECKED), 0);
 
     hButton = ::CreateWindowExW(0, L"button", L"右对齐",
         WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_AUTORADIOBUTTON,
-        width - 105, 180, 60, 25, _hSelf, reinterpret_cast<HMENU>(IDB_LYRICS_RIGHT), s_hInstance, nullptr);
+        width - 105, 170, 60, 25, _hSelf, reinterpret_cast<HMENU>(IDB_LYRICS_RIGHT), s_hInstance, nullptr);
     ::SendMessageW(hButton, WM_SETFONT, reinterpret_cast<WPARAM>(hFont), static_cast<LPARAM>(TRUE));
     if ((_drawParam.align & 0xF) == LYRICS_RIGHT) ::SendMessageW(hButton, BM_SETCHECK, static_cast<WPARAM>(BST_CHECKED), 0);
 
     _hStaticExample = ::CreateWindowExW(WS_EX_CLIENTEDGE, L"static", nullptr,
         WS_CHILD | WS_VISIBLE | SS_OWNERDRAW,
-        30, height - 185, width - 60, 100, _hSelf, NULL, s_hInstance, nullptr);
+        30, height - 200, width - 60, 120, _hSelf, NULL, s_hInstance, nullptr);
 
     hButton = ::CreateWindowExW(0, L"button", L"字体",
         WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_TABSTOP,
-        30, 200, 50, 25, _hSelf, (HMENU)IDS_SETFONT, s_hInstance, nullptr);
+        30, 190, 50, 25, _hSelf, reinterpret_cast<HMENU>(IDS_SETFONT), s_hInstance, nullptr);
     ::SendMessageW(hButton, WM_SETFONT, reinterpret_cast<WPARAM>(hFont), static_cast<LPARAM>(TRUE));
 
     hStaticLabel = ::CreateWindowExW(0, L"static", L"倒计时字符",
         WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS,
-        120, 205, 70, 25, _hSelf, NULL, s_hInstance, nullptr);
+        120, 195, 70, 25, _hSelf, NULL, s_hInstance, nullptr);
     ::SendMessageW(hStaticLabel, WM_SETFONT, reinterpret_cast<WPARAM>(hFont), static_cast<LPARAM>(TRUE));
 
     _hComboBox = ::CreateWindowExW(WS_EX_CLIENTEDGE, L"combobox", nullptr,
         WS_CHILD | WS_VISIBLE | WS_TABSTOP | WS_CLIPSIBLINGS | CBS_DROPDOWN,
-        195, 200, 45, 30, _hSelf, NULL, s_hInstance, nullptr);
+        195, 190, 45, 30, _hSelf, NULL, s_hInstance, nullptr);
     ::SendMessageW(_hComboBox, WM_SETFONT, reinterpret_cast<WPARAM>(hFont), static_cast<LPARAM>(TRUE));
     ::SendMessageW(_hComboBox, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"●"));
     ::SendMessageW(_hComboBox, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"★"));
@@ -442,12 +434,12 @@ void LyricsSettingDialog::init() {
 
     hButton = ::CreateWindowExW(0, L"button", L"确定",
         WS_CHILD | WS_VISIBLE | WS_TABSTOP | WS_CLIPSIBLINGS | BS_DEFPUSHBUTTON,
-        45, height - 55, 75, 25, _hSelf, (HMENU)IDOK, s_hInstance, nullptr);
+        45, height - 55, 75, 25, _hSelf, reinterpret_cast<HMENU>(IDOK), s_hInstance, nullptr);
     ::SendMessageW(hButton, WM_SETFONT, reinterpret_cast<WPARAM>(hFont), static_cast<LPARAM>(TRUE));
 
     hButton = ::CreateWindowExW(0, L"button", L"取消",
         WS_CHILD | WS_VISIBLE | WS_TABSTOP | WS_CLIPSIBLINGS,
-        width - 120, height - 55, 75, 25, _hSelf, (HMENU)IDCANCEL, s_hInstance, nullptr);
+        width - 120, height - 55, 75, 25, _hSelf, reinterpret_cast<HMENU>(IDCANCEL), s_hInstance, nullptr);
     ::SendMessageW(hButton, WM_SETFONT, reinterpret_cast<WPARAM>(hFont), static_cast<LPARAM>(TRUE));
 }
 
