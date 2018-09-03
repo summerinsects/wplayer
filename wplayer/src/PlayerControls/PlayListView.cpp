@@ -15,7 +15,7 @@ static struct {
 bool PlayListView::init(HWND hPerent, const POINT &pos, const SIZE &size) {
     _hSelf = ::CreateWindowExW(WS_EX_CLIENTEDGE | WS_EX_ACCEPTFILES,
         WC_LISTVIEWW, nullptr,
-        WS_VISIBLE | WS_CHILD | WS_CLIPSIBLINGS | LVS_REPORT | LVS_SHOWSELALWAYS,
+        WS_VISIBLE | WS_CHILD | WS_CLIPSIBLINGS | LVS_REPORT | LVS_SHOWSELALWAYS | LVS_SINGLESEL,
         pos.x, pos.y, size.cx, size.cy,
         hPerent, NULL, s_hInstance, nullptr);
 
