@@ -47,8 +47,7 @@
 #define IDM_OPERATE_DELETE 0x3202
 
 #define IDM_TOOL_EDITLYRICS 0x3300
-#define IDM_TOOL_EDITID3 0x3301
-#define IDM_TOOL_DIRECTORY 0x3302
+#define IDM_TOOL_DIRECTORY 0x3301
 
 #define IDM_HELP_ABOUT 0x3400
 #define IDM_HELP_MANUAL 0x3401
@@ -296,7 +295,6 @@ void MainWindow::initMenu() {
 
     ::AppendMenuW(hToolMenu, MF_STRING, IDM_TOOL_DIRECTORY, L"转到目录(&D)...");
     ::AppendMenuW(hToolMenu, MF_SEPARATOR, 0, nullptr);
-    ::AppendMenuW(hToolMenu, MF_STRING, IDM_TOOL_EDITID3, L"编辑ID3v1(&E)...");
     ::AppendMenuW(hToolMenu, MF_STRING, IDM_TOOL_EDITLYRICS, L"制作歌词(&M)...");
 
     ::AppendMenuW(hHelpMenu, MF_STRING, IDM_HELP_ABOUT, L"关于(&A)...");
@@ -428,9 +426,6 @@ void MainWindow::onCommand(WPARAM wParam) {
         break;
 
     case IDM_TOOL_EDITLYRICS:
-        break;
-
-    case IDM_TOOL_EDITID3:
         break;
 
     case IDM_TOOL_DIRECTORY: {
