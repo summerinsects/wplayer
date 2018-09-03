@@ -1,6 +1,7 @@
 ﻿#include "MainWindow.h"
 #include <commdlg.h>
 #include <CommCtrl.h>
+#include <shellapi.h>
 #include "../base/Common.h"
 #include "../LyricsSettingDialog/LyricsSettingDialog.h"
 
@@ -432,8 +433,15 @@ void MainWindow::onCommand(WPARAM wParam) {
     case IDM_TOOL_EDITID3:
         break;
 
-    case IDM_TOOL_DIRECTORY:
+    case IDM_TOOL_DIRECTORY: {
+        LPCWSTR file = _listView.getCurrentFile();
+        if (file != nullptr) {
+            std::wstring cmd = L"/e,/select, ";
+            cmd.append(file);
+            ::ShellExecuteW(_hSelf, L"open", L"explorer", cmd.c_str(), nullptr, SW_SHOW);
+        }
         break;
+    }
 
     case IDM_HELP_ABOUT:
         ::MessageBoxW(_hSelf, L"By: summer_insects", L"关于", MB_ICONASTERISK);
