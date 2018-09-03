@@ -22,6 +22,7 @@ public:
     LPCWSTR getCurrentFile();
     LPCWSTR getNextFile(PLAY_MODE mode, bool manual);
     LPCWSTR getPrevFile(PLAY_MODE mode);
+    LPCWSTR getSelectedFile() const;
 
 protected:
     void initColumns();

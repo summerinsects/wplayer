@@ -140,6 +140,27 @@ void PlayListView::onNotify(WPARAM wParam, LPARAM lParam) {
 
     case NM_RCLICK: {  // 右键
         LPNMITEMACTIVATE ia = reinterpret_cast<LPNMITEMACTIVATE>(lParam);
+        if (ia->iItem != -1) {
+            _selectedIdx = ia->iItem;
+
+            HMENU hPopupMenu = ::CreatePopupMenu();
+
+            ::AppendMenuW(hPopupMenu, MF_STRING, IDM_OPERATE_PLAY, L"播放/暂停(&P)");
+            ::AppendMenuW(hPopupMenu, MF_STRING, IDM_OPERATE_STOP, L"停止(&T)");
+            ::AppendMenuW(hPopupMenu, MF_SEPARATOR, 0, nullptr);
+            ::AppendMenuW(hPopupMenu, MF_STRING, IDM_OPERATE_FORWARD, L"前进(&F)");
+            ::AppendMenuW(hPopupMenu, MF_STRING, IDM_OPERATE_BACKWARD, L"后退(&B)");
+            ::AppendMenuW(hPopupMenu, MF_SEPARATOR, 0, nullptr);
+            ::AppendMenuW(hPopupMenu, MF_STRING, IDM_TOOL_DIRECTORY, L"转到目录(&D)");
+            ::AppendMenuW(hPopupMenu, MF_SEPARATOR, 0, nullptr);
+            ::AppendMenuW(hPopupMenu, MF_STRING, IDM_OPERATE_DELETE, L"删除(&L)");
+
+            POINT point = { ia->ptAction.x, ia->ptAction.y};
+            ::ClientToScreen(_hSelf, &point);
+
+            ::TrackPopupMenuEx(hPopupMenu, TPM_LEFTALIGN | TPM_TOPALIGN, point.x, point.y, ::GetParent(_hSelf), nullptr);
+            ::DestroyMenu(hPopupMenu);
+        }
         break;
     }
 
@@ -201,3 +222,11 @@ LPCWSTR PlayListView::getPrevFile(PLAY_MODE mode) {
         return _files.at(_playingIdx).c_str();
     }
 }
+
+LPCWSTR PlayListView::getSelectedFile() const {
+    if (_files.empty() || _selectedIdx < 0) {
+        return nullptr;
+    }
+    return _files.at(_selectedIdx).c_str();
+}
+

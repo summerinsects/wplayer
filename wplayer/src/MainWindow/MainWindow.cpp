@@ -376,7 +376,7 @@ void MainWindow::onCommand(WPARAM wParam) {
         break;
 
     case IDM_TOOL_DIRECTORY: {
-        LPCWSTR file = _listView.getCurrentFile();
+        LPCWSTR file = _listView.getSelectedFile();
         if (file != nullptr) {
             std::wstring cmd = L"/e,/select, ";
             cmd.append(file);
