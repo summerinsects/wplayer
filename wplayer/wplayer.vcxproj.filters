@@ -92,6 +92,9 @@
     <ClInclude Include="src\LyricsSettingDialog\LyricsSettingDialog.h">
       <Filter>src\LyricsSettingDialog</Filter>
     </ClInclude>
+    <ClInclude Include="src\MainWindow\MainResources.h">
+      <Filter>src\MainWindow</Filter>
+    </ClInclude>
     <ClInclude Include="src\MainWindow\MainWindow.h">
       <Filter>src\MainWindow</Filter>
     </ClInclude>

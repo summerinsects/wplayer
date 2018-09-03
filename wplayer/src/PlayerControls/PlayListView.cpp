@@ -2,6 +2,7 @@
 #include <CommCtrl.h>
 #include <shellapi.h>
 #include <time.h>
+#include "../MainWindow/MainResources.h"
 
 static struct {
     int width;
@@ -132,8 +133,8 @@ void PlayListView::onNotify(WPARAM wParam, LPARAM lParam) {
         _selectedIdx = ia->iItem;
         _playingIdx = _selectedIdx;
         HWND hParent = ::GetParent(_hSelf);
-        ::SendMessageW(hParent, WM_COMMAND, MAKEWPARAM(/*IDB_STOP*/0x2004, 0), 0);  // 停止
-        ::SendMessageW(hParent, WM_COMMAND, MAKEWPARAM(/*IDB_PLAY*/0x2001, 0), 0);  // 播放
+        ::SendMessageW(hParent, WM_COMMAND, MAKEWPARAM(IDB_STOP, 0), 0);  // 停止
+        ::SendMessageW(hParent, WM_COMMAND, MAKEWPARAM(IDB_PLAY, 0), 0);  // 播放
         break;
     }
 

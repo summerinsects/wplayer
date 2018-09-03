@@ -134,6 +134,7 @@
     <ClInclude Include="src\DesktopWindow\DesktopWindow.h" />
     <ClInclude Include="src\DrawSupport\DrawSupport.h" />
     <ClInclude Include="src\LyricsSettingDialog\LyricsSettingDialog.h" />
+    <ClInclude Include="src\MainWindow\MainResources.h" />
     <ClInclude Include="src\MainWindow\MainWindow.h" />
     <ClInclude Include="src\PlayerControls\PlayListView.h" />
   </ItemGroup>

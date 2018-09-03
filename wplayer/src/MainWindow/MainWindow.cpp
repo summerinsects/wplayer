@@ -2,62 +2,9 @@
 #include <commdlg.h>
 #include <CommCtrl.h>
 #include <shellapi.h>
+#include "MainResources.h"
 #include "../base/Common.h"
 #include "../LyricsSettingDialog/LyricsSettingDialog.h"
-
-#define APP_NAME L"wplayer"
-
-#define IDB_MUTE 0x2000
-#define IDB_PLAY 0x2001
-#define IDB_PREV 0x2002
-#define IDB_NEXT 0x2003
-#define IDB_STOP 0x2004
-
-#define IDM_FILE_LOAD 0x3000
-#define IDM_FILE_CLOSE 0x3001
-#define IDM_FILE_EXIT 0x3002
-
-#define IDM_SETTING_DESKTOP 0x3100
-#define IDM_SETTING_LOCK 0x3101
-#define IDM_SETTING_STYLE 0x3102
-#define IDM_SETTING_ALL_REPEAT 0x3110
-#define IDM_SETTING_ORDER 0x3111
-#define IDM_SETTING_REPEAT_ONCE 0x3112
-#define IDM_SETTING_ONCE 0x3113
-#define IDM_SETTING_SHUFFLE 0x3114
-
-#define IDM_OPERATE_PLAY IDB_PLAY
-#define IDM_OPERATE_STOP IDB_STOP
-#define IDM_OPERATE_FORWARD 0x3200
-#define IDM_OPERATE_BACKWARD 0x3201
-#define IDM_OPERATE_PREV IDB_PREV
-#define IDM_OPERATE_NEXT IDB_NEXT
-#define IDM_OPERATE_AHEAD_100MS 0x3210
-#define IDM_OPERATE_AHEAD_200MS 0x3211
-#define IDM_OPERATE_AHEAD_500MS 0x3212
-#define IDM_OPERATE_AHEAD_1S 0x3213
-#define IDM_OPERATE_AHEAD_2S 0x3214
-#define IDM_OPERATE_AHEAD_5S 0x3215
-#define IDM_OPERATE_DELAY_100MS 0x3220
-#define IDM_OPERATE_DELAY_200MS 0x3221
-#define IDM_OPERATE_DELAY_500MS 0x3222
-#define IDM_OPERATE_DELAY_1S 0x3223
-#define IDM_OPERATE_DELAY_2S 0x3224
-#define IDM_OPERATE_DELAY_5S 0x3225
-#define IDM_OPERATE_DELETE 0x3202
-
-#define IDM_TOOL_EDITLYRICS 0x3300
-#define IDM_TOOL_DIRECTORY 0x3301
-
-#define IDM_HELP_ABOUT 0x3400
-#define IDM_HELP_MANUAL 0x3401
-
-#define IDM_NOTIFY_RECOVERY 0x3500
-
-#define IDT_PLAYER_TIMER 0x4000
-
-#define PROGRESS_SCALE 1000
-#define FRAME_DELAY 30
 
 int MainWindow::run(HINSTANCE hInstance, int iCmdShow) {
     s_hInstance = hInstance;
