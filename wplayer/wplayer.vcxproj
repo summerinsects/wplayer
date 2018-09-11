@@ -121,6 +121,7 @@
     <ClCompile Include="src\base\Window.cpp" />
     <ClCompile Include="src\DesktopWindow\DesktopWindow.cpp" />
     <ClCompile Include="src\DrawSupport\DrawSupport.cpp" />
+    <ClCompile Include="src\LyricsEditorDialog\LyricsEditorDialog.cpp" />
     <ClCompile Include="src\LyricsSettingDialog\LyricsSettingDialog.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\MainWindow\MainWindow.cpp" />
@@ -133,6 +134,7 @@
     <ClInclude Include="src\base\Window.h" />
     <ClInclude Include="src\DesktopWindow\DesktopWindow.h" />
     <ClInclude Include="src\DrawSupport\DrawSupport.h" />
+    <ClInclude Include="src\LyricsEditorDialog\LyricsEditorDialog.h" />
     <ClInclude Include="src\LyricsSettingDialog\LyricsSettingDialog.h" />
     <ClInclude Include="src\MainWindow\MainResources.h" />
     <ClInclude Include="src\MainWindow\MainWindow.h" />

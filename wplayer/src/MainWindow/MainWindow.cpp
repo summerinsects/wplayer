@@ -8,6 +8,7 @@
 #include "../DesktopWindow/DesktopWindow.h"
 #include "../AudioSupport/MciPlayer.h"
 #include "../LyricsSettingDialog/LyricsSettingDialog.h"
+#include "../LyricsEditorDialog/LyricsEditorDialog.h"
 
 int MainWindow::run(HINSTANCE hInstance, int iCmdShow) {
     s_hInstance = hInstance;
@@ -28,17 +29,21 @@ int MainWindow::run(HINSTANCE hInstance, int iCmdShow) {
         return false;
     }
 
+    HMODULE hLibEdit = ::LoadLibraryW(L"riched20.dll");
+
     TrackBar volumeTrack;
     TrackBar progressTrack;
     PlayListView listView;
     DesktopWindow desktopWindow;
     MciPlayer player;
+    LyricsEditorDialog lyricsEditor;
 
     _volumeTrack = &volumeTrack;
     _progressTrack = &progressTrack;
     _listView = &listView;
     _desktopWindow = &desktopWindow;
     _player = &player;
+    _lyricsEditor = &lyricsEditor;
 
     RECT screenRect;
     ::SystemParametersInfoW(SPI_GETWORKAREA, 0, &screenRect, 0);
@@ -60,6 +65,8 @@ int MainWindow::run(HINSTANCE hInstance, int iCmdShow) {
         ::TranslateMessage(&msg);
         ::DispatchMessageW(&msg);
     }
+
+    ::FreeLibrary(hLibEdit);
 
     return static_cast<int>(msg.wParam);
 }
@@ -388,6 +395,7 @@ void MainWindow::onCommand(WPARAM wParam) {
         break;
 
     case IDM_TOOL_EDITLYRICS:
+        _lyricsEditor->show(_hSelf);
         break;
 
     case IDM_TOOL_DIRECTORY: {
