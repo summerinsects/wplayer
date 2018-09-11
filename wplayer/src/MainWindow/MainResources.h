@@ -52,7 +52,6 @@
 
 #define IDT_PLAYER_TIMER 0x4000
 
-#define PROGRESS_SCALE 1000
 #define FRAME_DELAY 30
 
 #endif

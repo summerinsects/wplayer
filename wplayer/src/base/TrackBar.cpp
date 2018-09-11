@@ -62,14 +62,14 @@ void TrackBar::onHScroll(WPARAM wParam, LPARAM lParam) {
     case TB_THUMBTRACK:  // 拖动
         _isTracking = true;
         if (_onTracking) {
-            _onTracking(this, HIWORD(wParam));
+            //_onTracking(this, HIWORD(wParam));  // 这个只能支持16位
+            _onTracking(this, static_cast<LONG_PTR>(::SendMessageW(_hSelf, TBM_GETPOS, 0, 0)));
         }
         break;
     case TB_ENDTRACK:  // 拖动结束
         _isTracking = false;
         if (_onPosChanged) {
-            LRESULT pos = ::SendMessageW(_hSelf, TBM_GETPOS, 0, 0);
-            _onPosChanged(this, pos);
+            _onPosChanged(this, static_cast<LONG_PTR>(::SendMessageW(_hSelf, TBM_GETPOS, 0, 0)));
         }
         break;
     default:

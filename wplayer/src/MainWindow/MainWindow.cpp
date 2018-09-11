@@ -136,10 +136,10 @@ void MainWindow::initWidgets() {
     ::SendMessageW(_volumeTrack.getHWnd(), TBM_SETPOS, static_cast<WPARAM>(TRUE), static_cast<LPARAM>(50));
 
     _progressTrack.setTrackingListener([this](TrackBar *, LONG_PTR pos) {
-        refreshCurrentTime(pos * PROGRESS_SCALE);
+        refreshCurrentTime(pos);
     });
     _progressTrack.setPosChangedListener([this](TrackBar *, LONG_PTR pos) {
-        _player.seekTo(_hSelf, static_cast<DWORD>(pos * PROGRESS_SCALE), _playing);
+        _player.seekTo(_hSelf, static_cast<DWORD>(pos), _playing);
         _desktopWindow.forceRefresh(true);
     });
     _volumeTrack.setTrackingListener([this](TrackBar *, LONG_PTR pos) {
@@ -584,22 +584,22 @@ void MainWindow::refreshPlayerControls(DWORD_PTR curTime) {
     }
 
     refreshCurrentTime(curTime);
-    ::SendMessageW(_progressTrack.getHWnd(), TBM_SETPOS, static_cast<WPARAM>(TRUE), static_cast<LPARAM>(curTime / PROGRESS_SCALE));  // 设置进度位置
+    ::SendMessageW(_progressTrack.getHWnd(), TBM_SETPOS, static_cast<WPARAM>(TRUE), static_cast<LPARAM>(curTime));  // 设置进度位置
 }
 
 void MainWindow::setupProgress() {
     WCHAR textBuf[32];
     ldiv_t ret1, ret2;
 
-    ret1 = ldiv((long)_audioLength, 60000);
-    ret2 = ldiv(ret1.rem, 1000);
+    ret1 = ldiv((long)_audioLength, 60000L);
+    ret2 = ldiv(ret1.rem, 1000L);
 
     _snwprintf(textBuf, 32, L"%.2ld:%.2ld.%.2ld", ret1.quot, ret2.quot, ret2.rem / 10);
 
     ::SendMessageW(_hTotalTime, WM_SETTEXT, 0, reinterpret_cast<LPARAM>(textBuf));  // 总时间
     ::SendMessageW(_hCurrentTime, WM_SETTEXT, 0, reinterpret_cast<LPARAM>(L"00:00.00"));  // 当前时间
 
-    ::SendMessageW(_progressTrack.getHWnd(), TBM_SETRANGEMAX, static_cast<WPARAM>(TRUE), static_cast<LPARAM>(_audioLength / PROGRESS_SCALE));  // 进度
+    ::SendMessageW(_progressTrack.getHWnd(), TBM_SETRANGEMAX, static_cast<WPARAM>(TRUE), static_cast<LPARAM>(_audioLength));  // 进度
 }
 
 void MainWindow::toggleMute() {
