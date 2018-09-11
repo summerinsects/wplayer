@@ -114,6 +114,8 @@ bool PlayListView::insertListItem(LPCWSTR fileName) {
 }
 
 void PlayListView::onNotify(WPARAM wParam, LPARAM lParam) {
+    UNREFERENCED_PARAMETER(wParam);
+
     switch (reinterpret_cast<LPNMHDR>(lParam)->code) {
     case LVN_COLUMNCLICK:
         if (_files.empty()) {
