@@ -58,6 +58,8 @@ LRESULT TrackBar::runProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 }
 
 void TrackBar::onHScroll(WPARAM wParam, LPARAM lParam) {
+    UNREFERENCED_PARAMETER(lParam);
+
     switch (LOWORD(wParam)) {
     case TB_THUMBTRACK:  // 拖动
         _isTracking = true;
