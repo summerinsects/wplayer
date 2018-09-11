@@ -2,10 +2,11 @@
 #define __MAIN_WINDOW_H__
 
 #include "../base/Window.h"
-#include "../base/TrackBar.h"
 #include "../PlayerControls/PlayListView.h"
-#include "../DesktopWindow/DesktopWindow.h"
-#include "../AudioSupport/MciPlayer.h"
+
+class TrackBar;
+class DesktopWindow;
+class MciPlayer;
 
 class MainWindow : public Window {
 public:
@@ -43,11 +44,11 @@ private:
     HWND _hStopButton;
     HWND _hMuteButton;
 
-    TrackBar _volumeTrack;
-    TrackBar _progressTrack;
-    PlayListView _listView;
-    DesktopWindow _desktopWindow;
-    MciPlayer _player;
+    TrackBar *_volumeTrack;
+    TrackBar *_progressTrack;
+    PlayListView *_listView;
+    DesktopWindow *_desktopWindow;
+    MciPlayer *_player;
     bool _opened = false;
     bool _playing = false;
     bool _muting = false;

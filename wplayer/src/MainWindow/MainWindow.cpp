@@ -4,6 +4,9 @@
 #include <shellapi.h>
 #include "MainResources.h"
 #include "../base/Common.h"
+#include "../base/TrackBar.h"
+#include "../DesktopWindow/DesktopWindow.h"
+#include "../AudioSupport/MciPlayer.h"
 #include "../LyricsSettingDialog/LyricsSettingDialog.h"
 
 int MainWindow::run(HINSTANCE hInstance, int iCmdShow) {
@@ -24,6 +27,18 @@ int MainWindow::run(HINSTANCE hInstance, int iCmdShow) {
     if (!::RegisterClassW(&wc) && ::GetLastError() != ERROR_ALREADY_REGISTERED) {
         return false;
     }
+
+    TrackBar volumeTrack;
+    TrackBar progressTrack;
+    PlayListView listView;
+    DesktopWindow desktopWindow;
+    MciPlayer player;
+
+    _volumeTrack = &volumeTrack;
+    _progressTrack = &progressTrack;
+    _listView = &listView;
+    _desktopWindow = &desktopWindow;
+    _player = &player;
 
     RECT screenRect;
     ::SystemParametersInfoW(SPI_GETWORKAREA, 0, &screenRect, 0);
@@ -128,30 +143,30 @@ void MainWindow::initWidgets() {
     LONG width = rect.right - rect.left;
     LONG height = rect.bottom - rect.top;
 
-    _listView.init(_hSelf, POINT{ 10, 120 }, SIZE{ width - 20, height - 130 });
+    _listView->init(_hSelf, POINT{ 10, 120 }, SIZE{ width - 20, height - 130 });
 
-    _progressTrack.init(_hSelf, POINT{ 10, 30 }, SIZE{ width - 20, 20 });
-    _volumeTrack.init(_hSelf, POINT{ 10, 80 }, SIZE{ 110, 20 });
-    ::SendMessageW(_volumeTrack.getHWnd(), TBM_SETRANGE, static_cast<WPARAM>(FALSE), MAKELPARAM(0, 100));
-    ::SendMessageW(_volumeTrack.getHWnd(), TBM_SETPOS, static_cast<WPARAM>(TRUE), static_cast<LPARAM>(50));
+    _progressTrack->init(_hSelf, POINT{ 10, 30 }, SIZE{ width - 20, 20 });
+    _volumeTrack->init(_hSelf, POINT{ 10, 80 }, SIZE{ 110, 20 });
+    ::SendMessageW(_volumeTrack->getHWnd(), TBM_SETRANGE, static_cast<WPARAM>(FALSE), MAKELPARAM(0, 100));
+    ::SendMessageW(_volumeTrack->getHWnd(), TBM_SETPOS, static_cast<WPARAM>(TRUE), static_cast<LPARAM>(50));
 
-    _progressTrack.setTrackingListener([this](TrackBar *, LONG_PTR pos) {
+    _progressTrack->setTrackingListener([this](TrackBar *, LONG_PTR pos) {
         refreshCurrentTime(pos);
     });
-    _progressTrack.setPosChangedListener([this](TrackBar *, LONG_PTR pos) {
-        _player.seekTo(_hSelf, static_cast<DWORD>(pos), _playing);
-        _desktopWindow.forceRefresh(true);
+    _progressTrack->setPosChangedListener([this](TrackBar *, LONG_PTR pos) {
+        _player->seekTo(_hSelf, static_cast<DWORD>(pos), _playing);
+        _desktopWindow->forceRefresh(true);
     });
-    _volumeTrack.setTrackingListener([this](TrackBar *, LONG_PTR pos) {
+    _volumeTrack->setTrackingListener([this](TrackBar *, LONG_PTR pos) {
         _volume = static_cast<int>(pos) * 10;
         if (!_muting) {
-            _player.setVolume(_hSelf, _volume);
+            _player->setVolume(_hSelf, _volume);
         }
     });
-    _volumeTrack.setPosChangedListener([this](TrackBar *, LONG_PTR pos) {
+    _volumeTrack->setPosChangedListener([this](TrackBar *, LONG_PTR pos) {
         _volume = static_cast<int>(pos) * 10;
         if (!_muting) {
-            _player.setVolume(_hSelf, _volume);
+            _player->setVolume(_hSelf, _volume);
         }
     });
 
@@ -165,7 +180,7 @@ void MainWindow::initWidgets() {
     _hTotalTime = Common::createStatic(_hSelf, POINT{ width - 85, 10 }, SIZE{ 70, 20 }, L"00:00.00");
     ::SetWindowLongPtrW(_hTotalTime, GWL_STYLE, ::GetWindowLongPtrW(_hTotalTime , GWL_STYLE) | SS_RIGHT);
 
-    HFONT hFont = reinterpret_cast<HFONT>(::SendMessageW(_listView.getHWnd(), WM_GETFONT, 0, 0));
+    HFONT hFont = reinterpret_cast<HFONT>(::SendMessageW(_listView->getHWnd(), WM_GETFONT, 0, 0));
     ::SendMessageW(_hPlayButton, WM_SETFONT, reinterpret_cast<WPARAM>(hFont), static_cast<LPARAM>(FALSE));
     ::SendMessageW(_hPrevButton, WM_SETFONT, reinterpret_cast<WPARAM>(hFont), static_cast<LPARAM>(FALSE));
     ::SendMessageW(_hNextButton, WM_SETFONT, reinterpret_cast<WPARAM>(hFont), static_cast<LPARAM>(FALSE));
@@ -174,7 +189,7 @@ void MainWindow::initWidgets() {
     ::SendMessageW(_hCurrentTime, WM_SETFONT, reinterpret_cast<WPARAM>(hFont), static_cast<LPARAM>(FALSE));
     ::SendMessageW(_hTotalTime, WM_SETFONT, reinterpret_cast<WPARAM>(hFont), static_cast<LPARAM>(FALSE));
 
-    _desktopWindow.init();
+    _desktopWindow->init();
 }
 
 void MainWindow::initMenu() {
@@ -256,8 +271,8 @@ void MainWindow::initMenu() {
 
 void MainWindow::onInitMenuPopup(HMENU hMenu) {
     if (hMenu == _hSettingMenu || hMenu == _hNotifyMenu) {
-        ::CheckMenuItem(hMenu, IDM_SETTING_DESKTOP, ::IsWindowVisible(_desktopWindow.getHWnd()) ? MF_CHECKED : MF_UNCHECKED);
-        ::CheckMenuItem(hMenu, IDM_SETTING_LOCK, _desktopWindow.isLock() ? MF_CHECKED : MF_UNCHECKED);
+        ::CheckMenuItem(hMenu, IDM_SETTING_DESKTOP, ::IsWindowVisible(_desktopWindow->getHWnd()) ? MF_CHECKED : MF_UNCHECKED);
+        ::CheckMenuItem(hMenu, IDM_SETTING_LOCK, _desktopWindow->isLock() ? MF_CHECKED : MF_UNCHECKED);
     }
     else if (hMenu == _hPlayModeMenu) {
         ::CheckMenuRadioItem(hMenu, IDM_SETTING_ALL_REPEAT, IDM_SETTING_SHUFFLE,
@@ -280,7 +295,7 @@ void MainWindow::onCommand(WPARAM wParam) {
         break;
 
     case IDM_SETTING_DESKTOP:
-        ::ShowWindow(_desktopWindow.getHWnd(), ::IsWindowVisible(_desktopWindow.getHWnd()) ? SW_HIDE : SW_SHOW);
+        ::ShowWindow(_desktopWindow->getHWnd(), ::IsWindowVisible(_desktopWindow->getHWnd()) ? SW_HIDE : SW_SHOW);
         break;
 
     case IDM_SETTING_ALL_REPEAT:
@@ -304,14 +319,14 @@ void MainWindow::onCommand(WPARAM wParam) {
         break;
 
     case IDM_SETTING_LOCK:
-        _desktopWindow.toggleLock();
+        _desktopWindow->toggleLock();
         break;
 
     case IDM_SETTING_STYLE: {
         LyricsSettingDialog lsd;
-        DrawSupport::DrawParam param = _desktopWindow.getDrawParam();
+        DrawSupport::DrawParam param = _desktopWindow->getDrawParam();
         if (lsd.show(_hSelf, &param)) {
-            _desktopWindow.setDrawParam(std::move(param));
+            _desktopWindow->setDrawParam(std::move(param));
         }
         break;
     }
@@ -322,51 +337,51 @@ void MainWindow::onCommand(WPARAM wParam) {
         break;
 
     case IDM_OPERATE_AHEAD_100MS:
-        _desktopWindow.setLyricsOffset(100);
+        _desktopWindow->setLyricsOffset(100);
         break;
 
     case IDM_OPERATE_AHEAD_200MS:
-        _desktopWindow.setLyricsOffset(200);
+        _desktopWindow->setLyricsOffset(200);
         break;
 
     case IDM_OPERATE_AHEAD_500MS:
-        _desktopWindow.setLyricsOffset(500);
+        _desktopWindow->setLyricsOffset(500);
         break;
 
     case IDM_OPERATE_AHEAD_1S:
-        _desktopWindow.setLyricsOffset(1000);
+        _desktopWindow->setLyricsOffset(1000);
         break;
 
     case IDM_OPERATE_AHEAD_2S:
-        _desktopWindow.setLyricsOffset(2000);
+        _desktopWindow->setLyricsOffset(2000);
         break;
 
     case IDM_OPERATE_AHEAD_5S:
-        _desktopWindow.setLyricsOffset(5000);
+        _desktopWindow->setLyricsOffset(5000);
         break;
 
     case IDM_OPERATE_DELAY_100MS:
-        _desktopWindow.setLyricsOffset(-100);
+        _desktopWindow->setLyricsOffset(-100);
         break;
 
     case IDM_OPERATE_DELAY_200MS:
-        _desktopWindow.setLyricsOffset(-200);
+        _desktopWindow->setLyricsOffset(-200);
         break;
 
     case IDM_OPERATE_DELAY_500MS:
-        _desktopWindow.setLyricsOffset(-500);
+        _desktopWindow->setLyricsOffset(-500);
         break;
 
     case IDM_OPERATE_DELAY_1S:
-        _desktopWindow.setLyricsOffset(-1000);
+        _desktopWindow->setLyricsOffset(-1000);
         break;
 
     case IDM_OPERATE_DELAY_2S:
-        _desktopWindow.setLyricsOffset(-2000);
+        _desktopWindow->setLyricsOffset(-2000);
         break;
 
     case IDM_OPERATE_DELAY_5S:
-        _desktopWindow.setLyricsOffset(-5000);
+        _desktopWindow->setLyricsOffset(-5000);
         break;
 
     case IDM_OPERATE_DELETE:
@@ -376,7 +391,7 @@ void MainWindow::onCommand(WPARAM wParam) {
         break;
 
     case IDM_TOOL_DIRECTORY: {
-        LPCWSTR file = _listView.getSelectedFile();
+        LPCWSTR file = _listView->getSelectedFile();
         if (file != nullptr) {
             std::wstring cmd = L"/e,/select, ";
             cmd.append(file);
@@ -410,11 +425,11 @@ void MainWindow::onCommand(WPARAM wParam) {
         break;
 
     case IDB_PREV:
-        playSpecifiedFile(_listView.getPrevFile(_playMode));
+        playSpecifiedFile(_listView->getPrevFile(_playMode));
         break;
 
     case IDB_NEXT:
-        playSpecifiedFile(_listView.getNextFile(_playMode, true));
+        playSpecifiedFile(_listView->getNextFile(_playMode, true));
         break;
 
     case IDB_STOP:
@@ -446,7 +461,7 @@ bool MainWindow::loadFile() {
     }
 
     if (allFileName[ofn.nFileOffset - 1] == L'\\') {
-        return _listView.insertListItem(allFileName);
+        return _listView->insertListItem(allFileName);
     }
 
     for (p = allFileName + ofn.nFileOffset; *p != L'\0'; ) {
@@ -455,7 +470,7 @@ bool MainWindow::loadFile() {
         wcscat(fileName, p);
         p += wcslen(p) + 1;
 
-        if (!_listView.insertListItem(fileName)) {
+        if (!_listView->insertListItem(fileName)) {
             return false;
         }
     }
@@ -472,13 +487,13 @@ bool MainWindow::onPlay() {
             return resume();
         }
         else {
-            return playSpecifiedFile(_listView.getCurrentFile());
+            return playSpecifiedFile(_listView->getCurrentFile());
         }
     }
 }
 
 bool MainWindow::pause() {
-    if (! _player.pause(_hSelf)) {
+    if (! _player->pause(_hSelf)) {
         return false;
     }
 
@@ -491,18 +506,18 @@ bool MainWindow::pause() {
 bool MainWindow::resume() {
     _playing = false;
     if (_muting) {
-        if (!_player.setVolume(_hSelf, 0)) {
+        if (!_player->setVolume(_hSelf, 0)) {
             return false;
         }
     }
     else {
-        _volume = static_cast<int>(::SendMessageW(_volumeTrack.getHWnd(), TBM_GETPOS, 0, 0)) * 10;
-        if (!_player.setVolume(_hSelf, static_cast<DWORD>(_volume))) {
+        _volume = static_cast<int>(::SendMessageW(_volumeTrack->getHWnd(), TBM_GETPOS, 0, 0)) * 10;
+        if (!_player->setVolume(_hSelf, static_cast<DWORD>(_volume))) {
             return false;
         }
     }
 
-    if (_player.play(_hSelf)) {
+    if (_player->play(_hSelf)) {
         ::SendMessageW(_hPlayButton, WM_SETTEXT, 0, reinterpret_cast<LPARAM>(L"||"));
         ::SetTimer(_hSelf, IDT_PLAYER_TIMER, FRAME_DELAY, nullptr);
 
@@ -519,7 +534,7 @@ bool MainWindow::stop() {
         return true;
     }
 
-    if (_player.closeFile(_hSelf)) {
+    if (_player->closeFile(_hSelf)) {
         _opened = false;
         _playing = false;
         refreshPlayerControls(0);
@@ -533,7 +548,7 @@ bool MainWindow::stop() {
 
 bool MainWindow::playSpecifiedFile(LPCWSTR fileName) {
     do {
-        if (_opened && !_player.closeFile(_hSelf)) {
+        if (_opened && !_player->closeFile(_hSelf)) {
             break;
         }
         _opened = false;
@@ -541,7 +556,7 @@ bool MainWindow::playSpecifiedFile(LPCWSTR fileName) {
             break;
         }
 
-        if (!_player.openFile(_hSelf, fileName)) {
+        if (!_player->openFile(_hSelf, fileName)) {
             break;
         }
         //TODO: setNotifyIconText
@@ -551,9 +566,9 @@ bool MainWindow::playSpecifiedFile(LPCWSTR fileName) {
             break;
         }
 
-        _audioLength = _player.getLength(_hSelf);
+        _audioLength = _player->getLength(_hSelf);
         setupProgress();
-        _desktopWindow.openMatchedLyrics(fileName);
+        _desktopWindow->openMatchedLyrics(fileName);
 
         return true;
 
@@ -579,12 +594,12 @@ void MainWindow::refreshCurrentTime(LONG_PTR pos) {
 }
 
 void MainWindow::refreshPlayerControls(DWORD_PTR curTime) {
-    if (_progressTrack.isTracking()) {
+    if (_progressTrack->isTracking()) {
         return;
     }
 
     refreshCurrentTime(curTime);
-    ::SendMessageW(_progressTrack.getHWnd(), TBM_SETPOS, static_cast<WPARAM>(TRUE), static_cast<LPARAM>(curTime));  // 设置进度位置
+    ::SendMessageW(_progressTrack->getHWnd(), TBM_SETPOS, static_cast<WPARAM>(TRUE), static_cast<LPARAM>(curTime));  // 设置进度位置
 }
 
 void MainWindow::setupProgress() {
@@ -599,19 +614,19 @@ void MainWindow::setupProgress() {
     ::SendMessageW(_hTotalTime, WM_SETTEXT, 0, reinterpret_cast<LPARAM>(textBuf));  // 总时间
     ::SendMessageW(_hCurrentTime, WM_SETTEXT, 0, reinterpret_cast<LPARAM>(L"00:00.00"));  // 当前时间
 
-    ::SendMessageW(_progressTrack.getHWnd(), TBM_SETRANGEMAX, static_cast<WPARAM>(TRUE), static_cast<LPARAM>(_audioLength));  // 进度
+    ::SendMessageW(_progressTrack->getHWnd(), TBM_SETRANGEMAX, static_cast<WPARAM>(TRUE), static_cast<LPARAM>(_audioLength));  // 进度
 }
 
 void MainWindow::toggleMute() {
     if (_muting) {
-        _volume = static_cast<int>(::SendMessageW(_volumeTrack.getHWnd(), TBM_GETPOS, 0, 0)) * 10;
-        if (_player.setVolume(_hSelf, static_cast<DWORD>(_volume))) {
+        _volume = static_cast<int>(::SendMessageW(_volumeTrack->getHWnd(), TBM_GETPOS, 0, 0)) * 10;
+        if (_player->setVolume(_hSelf, static_cast<DWORD>(_volume))) {
             ::SendMessageW(_hMuteButton, BM_SETCHECK, static_cast<WPARAM>(FALSE), 0);
             _muting = false;
         }
     }
     else {
-        if (_player.setVolume(_hSelf, 0)) {
+        if (_player->setVolume(_hSelf, 0)) {
             ::SendMessageW(_hMuteButton, BM_SETCHECK, static_cast<WPARAM>(TRUE), 0);
             _muting = TRUE;
         }
@@ -619,7 +634,7 @@ void MainWindow::toggleMute() {
 }
 
 bool MainWindow::onTimer() {
-    DWORD_PTR curPos = _player.getPos(_hSelf);
+    DWORD_PTR curPos = _player->getPos(_hSelf);
     if (curPos == static_cast<DWORD_PTR>(-1)) {
         return false;
     }
@@ -628,11 +643,11 @@ bool MainWindow::onTimer() {
         if (_playMode != PLAY_MODE::REPEAT_ONCE) {
             stop();
             if (_playMode != PLAY_MODE::ONCE) {
-                playSpecifiedFile(_listView.getNextFile(_playMode, false));
+                playSpecifiedFile(_listView->getNextFile(_playMode, false));
             }
         }
         else {
-            _player.seekTo(_hSelf, 0, true);
+            _player->seekTo(_hSelf, 0, true);
         }
         return false;
     }
@@ -641,7 +656,7 @@ bool MainWindow::onTimer() {
         refreshPlayerControls(curPos);
     }
 
-    _desktopWindow.refreshLyrics((int)curPos);
+    _desktopWindow->refreshLyrics(static_cast<int>(curPos));
 
     return true;
 }
