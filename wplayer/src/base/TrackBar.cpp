@@ -69,6 +69,9 @@ void TrackBar::onHScroll(WPARAM wParam, LPARAM lParam) {
         }
         break;
     case TB_ENDTRACK:  // 拖动结束
+        if (!_isTracking) {
+            break;
+        }
         _isTracking = false;
         if (_onPosChanged) {
             _onPosChanged(this, static_cast<LONG_PTR>(::SendMessageW(_hSelf, TBM_GETPOS, 0, 0)));
