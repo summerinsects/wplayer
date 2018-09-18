@@ -42,6 +42,9 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\AudioSupport\ffmpeg_core.cpp">
+      <Filter>src\AudioSupport</Filter>
+    </ClCompile>
     <ClCompile Include="src\AudioSupport\MciPlayer.cpp">
       <Filter>src\AudioSupport</Filter>
     </ClCompile>
@@ -77,6 +80,9 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\AudioSupport\ffmpeg_core.h">
+      <Filter>src\AudioSupport</Filter>
+    </ClInclude>
     <ClInclude Include="src\AudioSupport\MciPlayer.h">
       <Filter>src\AudioSupport</Filter>
     </ClInclude>

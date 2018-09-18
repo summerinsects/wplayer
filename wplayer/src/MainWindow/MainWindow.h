@@ -6,7 +6,6 @@
 
 class TrackBar;
 class DesktopWindow;
-class MciPlayer;
 class LyricsEditorDialog;
 
 class MainWindow : public Window {
@@ -49,11 +48,10 @@ private:
     TrackBar *_progressTrack;
     PlayListView *_listView;
     DesktopWindow *_desktopWindow;
-    MciPlayer *_player;
     bool _opened = false;
     bool _playing = false;
     bool _muting = false;
-    int _volume = 0;
+    uint32_t _volume = 0;
     PLAY_MODE _playMode = PLAY_MODE::ALL_REPEAT;
     DWORD_PTR _audioLength = 0;
 

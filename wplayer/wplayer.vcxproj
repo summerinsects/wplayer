@@ -98,6 +98,7 @@
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
+      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -115,6 +116,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\AudioSupport\ffmpeg_core.cpp" />
     <ClCompile Include="src\AudioSupport\MciPlayer.cpp" />
     <ClCompile Include="src\base\Common.cpp" />
     <ClCompile Include="src\base\TrackBar.cpp" />
@@ -128,6 +130,7 @@
     <ClCompile Include="src\PlayerControls\PlayListView.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\AudioSupport\ffmpeg_core.h" />
     <ClInclude Include="src\AudioSupport\MciPlayer.h" />
     <ClInclude Include="src\base\Common.h" />
     <ClInclude Include="src\base\TrackBar.h" />

@@ -6,7 +6,7 @@
 #include "../base/Common.h"
 #include "../base/TrackBar.h"
 #include "../DesktopWindow/DesktopWindow.h"
-#include "../AudioSupport/MciPlayer.h"
+#include "../AudioSupport/ffmpeg_core.h"
 #include "../LyricsSettingDialog/LyricsSettingDialog.h"
 #include "../LyricsEditorDialog/LyricsEditorDialog.h"
 
@@ -35,14 +35,12 @@ int MainWindow::run(HINSTANCE hInstance, int iCmdShow) {
     TrackBar progressTrack;
     PlayListView listView;
     DesktopWindow desktopWindow;
-    MciPlayer player;
     LyricsEditorDialog lyricsEditor;
 
     _volumeTrack = &volumeTrack;
     _progressTrack = &progressTrack;
     _listView = &listView;
     _desktopWindow = &desktopWindow;
-    _player = &player;
     _lyricsEditor = &lyricsEditor;
 
     RECT screenRect;
@@ -134,6 +132,7 @@ LRESULT MainWindow::runProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
         return 0;
 
     case WM_DESTROY:
+        ffmpeg_core::stop();
         ::PostQuitMessage(0);
         return 0;
 
@@ -154,26 +153,26 @@ void MainWindow::initWidgets() {
 
     _progressTrack->init(_hSelf, POINT{ 10, 30 }, SIZE{ width - 20, 20 });
     _volumeTrack->init(_hSelf, POINT{ 10, 80 }, SIZE{ 110, 20 });
-    ::SendMessageW(_volumeTrack->getHWnd(), TBM_SETRANGE, static_cast<WPARAM>(FALSE), MAKELPARAM(0, 100));
-    ::SendMessageW(_volumeTrack->getHWnd(), TBM_SETPOS, static_cast<WPARAM>(TRUE), static_cast<LPARAM>(50));
+    ::SendMessageW(_volumeTrack->getHWnd(), TBM_SETRANGEMAX, static_cast<WPARAM>(FALSE), static_cast<LPARAM>(ffmpeg_core::MAX_VOLUME));
+    ::SendMessageW(_volumeTrack->getHWnd(), TBM_SETPOS, static_cast<WPARAM>(TRUE), static_cast<LPARAM>(ffmpeg_core::MAX_VOLUME / 2));
 
     _progressTrack->setTrackingListener([this](TrackBar *, LONG_PTR pos) {
         refreshCurrentTime(pos);
     });
     _progressTrack->setPosChangedListener([this](TrackBar *, LONG_PTR pos) {
-        _player->seekTo(_hSelf, static_cast<DWORD>(pos), _playing);
+        ffmpeg_core::seekTo(static_cast<DWORD>(pos));
         _desktopWindow->forceRefresh(true);
     });
     _volumeTrack->setTrackingListener([this](TrackBar *, LONG_PTR pos) {
-        _volume = static_cast<int>(pos) * 10;
+        _volume = static_cast<uint32_t>(pos);
         if (!_muting) {
-            _player->setVolume(_hSelf, _volume);
+            ffmpeg_core::setVolume(_volume);
         }
     });
     _volumeTrack->setPosChangedListener([this](TrackBar *, LONG_PTR pos) {
-        _volume = static_cast<int>(pos) * 10;
+        _volume = static_cast<uint32_t>(pos);
         if (!_muting) {
-            _player->setVolume(_hSelf, _volume);
+            ffmpeg_core::setVolume(_volume);
         }
     });
 
@@ -501,7 +500,7 @@ bool MainWindow::onPlay() {
 }
 
 bool MainWindow::pause() {
-    if (! _player->pause(_hSelf)) {
+    if (!ffmpeg_core::pause()) {
         return false;
     }
 
@@ -514,18 +513,18 @@ bool MainWindow::pause() {
 bool MainWindow::resume() {
     _playing = false;
     if (_muting) {
-        if (!_player->setVolume(_hSelf, 0)) {
+        if (!ffmpeg_core::setVolume(0)) {
             return false;
         }
     }
     else {
-        _volume = static_cast<int>(::SendMessageW(_volumeTrack->getHWnd(), TBM_GETPOS, 0, 0)) * 10;
-        if (!_player->setVolume(_hSelf, static_cast<DWORD>(_volume))) {
+        _volume = static_cast<uint32_t>(::SendMessageW(_volumeTrack->getHWnd(), TBM_GETPOS, 0, 0));
+        if (!ffmpeg_core::setVolume(_volume)) {
             return false;
         }
     }
 
-    if (_player->play(_hSelf)) {
+    if (ffmpeg_core::resume()) {
         ::SendMessageW(_hPlayButton, WM_SETTEXT, 0, reinterpret_cast<LPARAM>(L"||"));
         ::SetTimer(_hSelf, IDT_PLAYER_TIMER, FRAME_DELAY, nullptr);
 
@@ -542,7 +541,7 @@ bool MainWindow::stop() {
         return true;
     }
 
-    if (_player->closeFile(_hSelf)) {
+    if (ffmpeg_core::stop()) {
         _opened = false;
         _playing = false;
         refreshPlayerControls(0);
@@ -554,9 +553,20 @@ bool MainWindow::stop() {
     return false;
 }
 
+static std::string WCharToUTF8(const std::wstring &wstr) {
+    std::string ret;
+    int len = ::WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), -1, nullptr, 0, nullptr, nullptr);
+    if (len > 0) {
+        ret.resize(len);
+        ::WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), -1, &ret[0], len, nullptr, nullptr);
+        ret.resize(strlen(ret.c_str()));
+    }
+    return ret;
+}
+
 bool MainWindow::playSpecifiedFile(LPCWSTR fileName) {
     do {
-        if (_opened && !_player->closeFile(_hSelf)) {
+        if (_opened && !ffmpeg_core::stop()) {
             break;
         }
         _opened = false;
@@ -564,17 +574,17 @@ bool MainWindow::playSpecifiedFile(LPCWSTR fileName) {
             break;
         }
 
-        if (!_player->openFile(_hSelf, fileName)) {
+        if (!ffmpeg_core::play(WCharToUTF8(fileName).c_str())) {
             break;
         }
         //TODO: setNotifyIconText
 
         _opened = true;
-        if (!resume()) {
-            break;
-        }
+        ::SendMessageW(_hPlayButton, WM_SETTEXT, 0, reinterpret_cast<LPARAM>(L"||"));
+        ::SetTimer(_hSelf, IDT_PLAYER_TIMER, FRAME_DELAY, nullptr);
+        _playing = true;
 
-        _audioLength = _player->getLength(_hSelf);
+        _audioLength = ffmpeg_core::getLength();
         setupProgress();
         _desktopWindow->openMatchedLyrics(fileName);
 
@@ -627,14 +637,14 @@ void MainWindow::setupProgress() {
 
 void MainWindow::toggleMute() {
     if (_muting) {
-        _volume = static_cast<int>(::SendMessageW(_volumeTrack->getHWnd(), TBM_GETPOS, 0, 0)) * 10;
-        if (_player->setVolume(_hSelf, static_cast<DWORD>(_volume))) {
+        _volume = static_cast<uint32_t>(::SendMessageW(_volumeTrack->getHWnd(), TBM_GETPOS, 0, 0));
+        if (ffmpeg_core::setVolume(_volume)) {
             ::SendMessageW(_hMuteButton, BM_SETCHECK, static_cast<WPARAM>(FALSE), 0);
             _muting = false;
         }
     }
     else {
-        if (_player->setVolume(_hSelf, 0)) {
+        if (ffmpeg_core::setVolume(0)) {
             ::SendMessageW(_hMuteButton, BM_SETCHECK, static_cast<WPARAM>(TRUE), 0);
             _muting = TRUE;
         }
@@ -642,12 +652,12 @@ void MainWindow::toggleMute() {
 }
 
 bool MainWindow::onTimer() {
-    DWORD_PTR curPos = _player->getPos(_hSelf);
+    DWORD_PTR curPos = ffmpeg_core::getPos();
     if (curPos == static_cast<DWORD_PTR>(-1)) {
         return false;
     }
 
-    if (_audioLength <= curPos) {  // 已播放完
+    if (ffmpeg_core::isFinish()) {
         if (_playMode != PLAY_MODE::REPEAT_ONCE) {
             stop();
             if (_playMode != PLAY_MODE::ONCE) {
@@ -655,7 +665,8 @@ bool MainWindow::onTimer() {
             }
         }
         else {
-            _player->seekTo(_hSelf, 0, true);
+            stop();
+            playSpecifiedFile(_listView->getCurrentFile());
         }
         return false;
     }
