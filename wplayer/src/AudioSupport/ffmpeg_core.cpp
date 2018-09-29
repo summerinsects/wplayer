@@ -122,6 +122,8 @@ namespace ffmpeg_core {
             ::waveOutPrepareHeader(as->hWaveOut, &as->waveHdr[i], sizeof(WAVEHDR));
         }
 
+        as->bytes = 0;
+
         return true;
     }
 
