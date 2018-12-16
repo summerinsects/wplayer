@@ -26,6 +26,8 @@ public:
 
 protected:
     void initColumns();
+    void refreshSelectedIndex(int idx);
+    bool loadPlayList();
 
     static LRESULT CALLBACK ListViewProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
     LRESULT runProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);

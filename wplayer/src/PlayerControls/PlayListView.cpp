@@ -171,12 +171,23 @@ void PlayListView::onNotify(WPARAM wParam, LPARAM lParam) {
     }
 }
 
+void PlayListView::refreshSelectedIndex(int idx) {
+    LVITEMW listItem;
+    listItem.mask = LVIF_STATE;
+    listItem.stateMask = LVIS_SELECTED;
+    listItem.state = LVIS_SELECTED;
+    ::SendMessageW(_hSelf, LVM_SETITEMSTATE, static_cast<WPARAM>(idx), reinterpret_cast<LPARAM>(&listItem));
+    ::SendMessageW(_hSelf, LVM_SETSELECTIONMARK, 0, static_cast<LPARAM>(idx));
+    _selectedIdx = idx;
+}
+
 LPCWSTR PlayListView::getCurrentFile() {
     if (_files.empty()) {
         return nullptr;
     }
 
     if (_playingIdx < 0) _playingIdx = 0;
+    refreshSelectedIndex(_playingIdx);
     return _files.at(_playingIdx).c_str();
 }
 
@@ -192,15 +203,18 @@ LPCWSTR PlayListView::getNextFile(PLAY_MODE mode, bool manual) {
         if (static_cast<size_t>(++_playingIdx) >= _files.size()) {
             _playingIdx = 0;
         }
+        refreshSelectedIndex(_playingIdx);
         return _files.at(_playingIdx).c_str();
     case PLAY_MODE::ORDER:
         if (manual || static_cast<size_t>(_playingIdx + 1) < _files.size()) {
-            return _files.at(++_playingIdx).c_str();
+            refreshSelectedIndex(++_playingIdx);
+            return _files.at(_playingIdx).c_str();
         }
         return nullptr;
     case PLAY_MODE::SHUFFLE:
         srand(static_cast<unsigned>(time(nullptr)));
         _playingIdx = static_cast<int>(rand() % _files.size());
+        refreshSelectedIndex(_playingIdx);
         return _files.at(_playingIdx).c_str();
     default:
         return nullptr;
@@ -216,11 +230,13 @@ LPCWSTR PlayListView::getPrevFile(PLAY_MODE mode) {
         if (--_playingIdx < 0) {
             _playingIdx = static_cast<int>(_files.size()) - 1;
         }
+        refreshSelectedIndex(_playingIdx);
         return _files.at(_playingIdx).c_str();
     }
     else {
         srand(static_cast<unsigned>(time(nullptr)));
         _playingIdx = static_cast<int>(rand() % _files.size());
+        refreshSelectedIndex(_playingIdx);
         return _files.at(_playingIdx).c_str();
     }
 }
@@ -232,3 +248,41 @@ LPCWSTR PlayListView::getSelectedFile() const {
     return _files.at(_selectedIdx).c_str();
 }
 
+bool PlayListView::loadPlayList() {
+    WCHAR dir[_MAX_PATH];
+    ::GetModuleFileNameW(NULL, dir, _MAX_PATH - 1);
+    LPWSTR backslash = wcsrchr(dir, L'\\');
+    wcscpy(backslash + 1, L"PlayerList.wpl");
+
+    FILE *fp = _wfopen(dir, L"r");
+    if (fp == nullptr) {
+        return false;
+    }
+
+    char textBuf[512];
+    char uft8FileName[512];
+    WCHAR fileName[_MAX_PATH];
+    while (fscanf(fp, "%511[^\"\n]", textBuf) == 1) {
+        size_t len = strlen(textBuf);
+        if (len >= 11U) {
+            if (strncmp(textBuf + len - 11, "<media src=", 12) == 0) {
+                fscanf(fp, "\"");
+                for (int i = 0; i < 512; ++i) {
+                    fread(&uft8FileName[i], 1, 1, fp);
+                    if (uft8FileName[i] == '\"') {
+                        uft8FileName[i] = '\0';
+                        break;
+                    }
+                }
+
+                ::MultiByteToWideChar(CP_UTF8, 0, uft8FileName, -1, fileName, _MAX_PATH);
+                insertListItem(fileName);
+            }
+        }
+        fscanf(fp, "%*[^\n]");
+        fscanf(fp, "%*c");
+    }
+
+    fclose(fp);
+    return true;
+}
