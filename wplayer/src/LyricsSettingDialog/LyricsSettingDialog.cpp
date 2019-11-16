@@ -117,6 +117,7 @@ INT_PTR LyricsSettingDialog::runProc(HWND hDialog, UINT message, WPARAM wParam, 
                 COLORREF color;
                 if (chooseColor(hDialog, &color)) {
                     colors->at(selected) = color;
+                    updateColor(_hCurrentList, static_cast<int>(selected), color);
                     ::InvalidateRect(_hStaticExample, nullptr, TRUE);
                 }
             }
